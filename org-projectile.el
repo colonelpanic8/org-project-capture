@@ -94,8 +94,6 @@ belongs, if available."
   (org-capture-place-template))
 
 (defun org-projectile:insert-or-goto-heading (heading)
-  (interactive
-   (list (read-string "Heading: ")))
   (goto-char (point-min))
   (unless (derived-mode-p 'org-mode)
     (error
@@ -110,8 +108,6 @@ belongs, if available."
     (insert "* " heading)))
 
 (defun org-projectile:project-heading (heading)
-  (interactive
-   (list (read-string "Heading: ")))
   (org-projectile:insert-or-goto-heading heading)
   (hide-subtree)
   (org-beginning-of-line)
