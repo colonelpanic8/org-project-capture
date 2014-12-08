@@ -1,0 +1,9 @@
+# Created by https://www.gitignore.io
+
+### Elisp ###
+# Compiled
+*.elc
+
+# Packaging
+.cask
+
