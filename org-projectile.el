@@ -5,7 +5,7 @@
 ;; Author: Ivan Malison <IvanMalison@gmail.com>
 ;; Keywords: org projectile todo
 ;; URL: https://github.com/IvanMalison/org-projectile
-;; Version: 0.0.0
+;; Version: 0.0.1
 ;; Package-Requires: ((projectile "0.11.0") (org "8.2.4"))
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -41,20 +41,23 @@ belongs, if available."
      (--reduce-from
           (or acc
               (let* ((cache-key (format "%s-%s" it dir))
-                     (cache-value (gethash cache-key projectile-project-root-cache)))
+                     (cache-value (gethash cache-key
+                                           projectile-project-root-cache)))
                 (if cache-value
                     (if (eq cache-value 'no-project-root)
                         nil
                       cache-value)
                   (let ((value (funcall it dir)))
-                    (puthash cache-key (or value 'no-project-root) projectile-project-root-cache)
+                    (puthash cache-key (or value 'no-project-root)
+                             projectile-project-root-cache)
                     value))))
           nil
           projectile-project-root-files-functions))))
 
-(defun org-projectile:project-todo-entry (&optional todo-format)
+(defun org-projectile:project-todo-entry (&optional capture-character todo-format)
   (unless todo-format (setq todo-format "* TODO %?\n"))
-  `("p" "Project Todo" entry
+  (unless capture-character (setq capture-character "p"))
+  `(,capture-character "Project Todo" entry
     (file+function ,org-projectile:projects-file
                    (lambda () (let ((heading
                                      (org-projectile:insert-heading-for-filename
@@ -118,7 +121,7 @@ belongs, if available."
 (defun org-projectile:project-todo-completing-read ()
   (interactive)
   (org-projectile:capture-for-project
-   (projectile-completing-read "Record TODO for project:"
+   (projectile-completing-read "Record TODO for project: "
                                (org-projectile:known-projects))))
 
 (provide 'org-projectile)

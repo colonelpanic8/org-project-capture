@@ -1,0 +1,29 @@
+[[http://melpa.org/#/org-projectile][file:http://melpa.org/packages/org-projectile-badge.svg]]
+
+org-projectile provides functions for the creation of [[http://orgmode.org/][org-mode]] TODOs that are associated with [[https://github.com/bbatsov/projectile][projectile]] projects.
+
+* Installation
+
+Install from MELPA with package-install org-projectile. See the [[https://github.com/milkypostman/melpa][melpa repository]] for details about how to set up MELPA if you have not already done so.
+
+* Usage
+Before using org-projectile, you must specify the file you would like to use for storing project TODOs, as well a keybinding for taking a project note with org-capture and a global keybinding for ~org-projectile:project-todo-completing-read~.
+
+#+BEGIN_SRC emacs-lisp
+(require 'org-projectile)
+(setq org-projectile:projects-file "/your/path/to/an/org/file/for/storing/projects.org")
+(add-to-list 'org-capture-templates (org-projectile:project-todo-entry "p"))
+(global-set-key (kbd "C-c n p") 'org-projectile:project-todo-completing-read)
+#+END_SRC
+
+Alternatively, using jwiegley's excellent [[https://github.com/jwiegley/use-package][use-package]]:
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-projectile
+  :bind (("C-c n p" . org-projectile:project-todo-completing-read))
+  :config
+  (progn
+    (setq org-projectile:projects-file "/your/path/to/an/org/file/for/storing/projects.org")
+    (add-to-list 'org-capture-templates (org-projectile:project-todo-entry "p")))
+  :ensure t)
+#+END_SRC
