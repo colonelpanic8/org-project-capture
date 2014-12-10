@@ -32,10 +32,11 @@
 (require 'projectile)
 
 (defvar org-projectile:projects-file "~/org/projects.org")
+(defvar org-projectile:capture-template "* TODO %?\n")
 
 (defun org-projectile:project-root-of-filepath (filepath)
-  "Retrieves the root directory of the project to which filepath
-belongs, if available."
+  ;; TODO(@IvanMalison): Replace this with projectile function if
+  ;; https://github.com/bbatsov/projectile/pull/571 is ever accepted.
   (file-truename
    (let ((dir (file-truename filepath)))
      (--reduce-from
@@ -54,8 +55,8 @@ belongs, if available."
           nil
           projectile-project-root-files-functions))))
 
-(defun org-projectile:project-todo-entry (&optional capture-character todo-format)
-  (unless todo-format (setq todo-format "* TODO %?\n"))
+(defun org-projectile:project-todo-entry (&optional capture-character capture-template)
+  (unless capture-template (setq capture-template org-projectile:capture-template))
   (unless capture-character (setq capture-character "p"))
   `(,capture-character "Project Todo" entry
     (file+function ,org-projectile:projects-file
@@ -65,7 +66,7 @@ belongs, if available."
                                 (org-projectile:insert-or-goto-heading heading)
                                 (org-end-of-line)
                                 heading)))
-    ,todo-format))
+    ,capture-template))
 
 (defun org-projectile:project-heading-from-file (filename)
   (file-name-nondirectory
@@ -89,10 +90,35 @@ belongs, if available."
                       (when (< 1 (nth 1 (org-heading-components)))
                         (point)))))))
 
-(defun org-projectile:capture-for-project (heading)
-  (org-capture-set-plist (org-projectile:project-todo-entry))
+(defun org-projectile:capture-for-project (heading &optional capture-template)
+  (org-capture-set-plist (org-projectile:project-todo-entry nil capture-template))
   (with-current-buffer (find-file-noselect org-projectile:projects-file)
-    (org-projectile:project-heading heading))  
+    (org-projectile:project-heading heading))
+  ;; TODO: super gross that this had to be copied from org-capture,
+  ;; Unfortunately, it does not seem to be possible to call into org-capture
+  ;; because it makes assumptions that make it impossible to set things up
+  ;; properly
+  (let ((orig-buf (current-buffer))
+	   (annotation (if (and (boundp 'org-capture-link-is-already-stored)
+				org-capture-link-is-already-stored)
+			   (plist-get org-store-link-plist :annotation)
+			 (ignore-errors (org-store-link nil))))
+	   initial)
+    (org-capture-put :original-buffer orig-buf
+                     :original-file (or (buffer-file-name orig-buf)
+                                        (and (featurep 'dired)
+                                             (car (rassq orig-buf dired-buffers))))
+                     :original-file-nondirectory
+                     (and (buffer-file-name orig-buf)
+                          (file-name-nondirectory
+                           (buffer-file-name orig-buf)))
+                     :annotation annotation
+                     :initial ""
+                     :return-to-wconf (current-window-configuration)
+                     :default-time
+                     (or org-overriding-default-time
+                         (org-current-time))))
+  (org-capture-put :template (org-capture-fill-template capture-template))
   (org-capture-set-target-location `(file+headline
                                      ,org-projectile:projects-file ,heading))
   (org-capture-place-template))
@@ -118,11 +144,12 @@ belongs, if available."
   (org-set-property "CATEGORY" heading))
 
 ;;;###autoload
-(defun org-projectile:project-todo-completing-read ()
+(defun org-projectile:project-todo-completing-read (&optional capture-template)
   (interactive)
   (org-projectile:capture-for-project
    (projectile-completing-read "Record TODO for project: "
-                               (org-projectile:known-projects))))
+                               (org-projectile:known-projects))
+   capture-template))
 
 (provide 'org-projectile)
 ;;; org-projectile.el ends here
