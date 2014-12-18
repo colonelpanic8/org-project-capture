@@ -40,9 +40,9 @@ Using jwiegley's excellent [[https://github.com/jwiegley/use-package][use-packag
 Both of these functions will create the relevant top level heading in the [[http://orgmode.org/][org-mode]] file stored in ~org-projectile:projects-file~ if it does not exist.
 
 * Customization
-Both ~org-projectile:project-todo-entry~ and ~org-projectile:project-todo-completing-read~ accept optional arguments that customize their behavior. The first argument to ~org-projectile:project-todo-entry~ is the character that will trigger the produced entry from org-capture. If no argument is supplied, the default value of ~"p"~ will be used. The second positional argument is the heading format that will be used. If no argument is supplied, the value of ~org-projectile:capture-template~ will be used as the capture template.
+Both ~org-projectile:project-todo-entry~ and ~org-projectile:project-todo-completing-read~ accept optional arguments that customize their behavior. The first argument to ~org-projectile:project-todo-entry~ is the character that will trigger the produced entry from org-capture. If no argument is supplied, the default value of ~p~ will be used. The second positional argument is the heading format that will be used. If no argument is supplied, the value of ~org-projectile:capture-template~ will be used as the capture template.
 
-The first argument to ~org-projectile:project-todo-completing-read~ does the same thing as the first argument to ~org-projectile:project-todo-entry~.
+The first argument to ~org-projectile:project-todo-completing-read~ does the same thing as the second argument to ~org-projectile:project-todo-entry~.
 
 Here is an example of how to use a custom capture template in conjunction with ~org-projectile:project-todo-entry~:
 
