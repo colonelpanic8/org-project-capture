@@ -51,7 +51,7 @@ Here is an example of how to use a custom capture template in conjunction with ~
   (org-projectile:project-todo-entry "l" "* TODO %? %a\n"))
 #+END_SRC
 
-In addition to going to the appropriate heading in your projects todo file, this capture template will autmatically link to the line at which the cursor was situated when org-capture was invoked.
+In addition to going to the appropriate heading in your projects todo file, this capture template will automatically link to the line at which the cursor was situated when org-capture was invoked.
 
 If you wish to use this type of functionality with ~org-projectile:project-todo-completing-read~, but only when it is explicitly requested, you might make it so that when call the function with a prefix argument, an alternative linking template is used:
 
