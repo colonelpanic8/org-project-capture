@@ -48,7 +48,7 @@ Here is an example of how to use a custom capture template in conjunction with ~
 
 #+BEGIN_SRC emacs-lisp
 (add-to-list 'org-capture-templates 
-  (org-projectile:project-todo-entry "l" "* TODO %? %a\n"))
+  (org-projectile:project-todo-entry "l" "* TODO %? %a\n" "Linked Project TODO"))
 #+END_SRC
 
 In addition to going to the appropriate heading in your projects todo file, this capture template will automatically link to the line at which the cursor was situated when org-capture was invoked.

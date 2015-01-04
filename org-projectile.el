@@ -55,10 +55,11 @@
           nil
           projectile-project-root-files-functions))))
 
-(defun org-projectile:project-todo-entry (&optional capture-character capture-template)
+(defun org-projectile:project-todo-entry (&optional capture-character capture-template capture-heading)
   (unless capture-template (setq capture-template org-projectile:capture-template))
   (unless capture-character (setq capture-character "p"))
-  `(,capture-character "Project Todo" entry
+  (unless capture-heading (setq capture-heading "Project Todo"))
+  `(,capture-character ,capture-heading entry
     (file+function ,org-projectile:projects-file
                    (lambda () (let ((heading
                                      (org-projectile:insert-heading-for-filename
