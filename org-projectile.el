@@ -1,11 +1,11 @@
-;;; org-projectile.el --- Repository todo management for org-mode
+;;; org-projectile.el --- Repository todo management for org-mode -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2014 Ivan Malison
 
 ;; Author: Ivan Malison <IvanMalison@gmail.com>
 ;; Keywords: org projectile todo
 ;; URL: https://github.com/IvanMalison/org-projectile
-;; Version: 0.0.1
+;; Version: 0.0.2
 ;; Package-Requires: ((projectile "0.11.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -143,6 +143,14 @@
   (hide-subtree)
   (org-beginning-of-line)
   (org-set-property "CATEGORY" heading))
+
+(defun org-projectile:helm-source (&optional capture-template)
+  (helm-build-sync-source "Org Capture Options:"
+    :candidates (cl-loop for project in (org-projectile:known-projects)
+                         collect `(,project . ,project))
+    :action `(("Do capture" .
+               ,(lambda (project)
+                 (org-projectile:capture-for-project project capture-template))))))
 
 ;;;###autoload
 (defun org-projectile:project-todo-completing-read (&optional capture-template)
