@@ -33,6 +33,7 @@
 
 (defvar org-projectile:projects-file "~/org/projects.org")
 (defvar org-projectile:capture-template "* TODO %?\n")
+(defvar org-projectile:linked-capture-template "* TODO %? %A\n")
 
 (defun org-projectile:project-root-of-filepath (filepath)
   ;; TODO(@IvanMalison): Replace this with projectile function if
@@ -150,7 +151,17 @@
                          collect `(,project . ,project))
     :action `(("Do capture" .
                ,(lambda (project)
-                 (org-projectile:capture-for-project project capture-template))))))
+                  (org-projectile:capture-for-project project capture-template))))))
+
+;;;###autoload
+(defun org-projectile:template-or-project (&optional arg)
+  (interactive "P")
+  (helm :sources
+        (list (helm-source-org-capture-templates)
+              (org-projectile:helm-source
+               (if arg org-projectile:linked-capture-template nil)))
+        :candidate-number-limit 99999
+        :buffer "*helm org capture templates*"))
 
 ;;;###autoload
 (defun org-projectile:project-todo-completing-read (&optional capture-template)
