@@ -35,7 +35,9 @@ Using jwiegley's excellent [[https://github.com/jwiegley/use-package][use-packag
 * Usage
 ~org-projectile:project-todo-completing-read~ opens a projectile-completing-read that allows the selection of a project heading under which to store the input that is subsequently captured in an ~org-capture~ buffer. Completion candidates for this function are generated using the project list returned from ~(projectile-relevant-known-projects)~ and the existing headings in ~org-projectile:projects-file~.
 
-~org-projectile:project-todo-entry~ is a function that builds an entry that can be added to ~org-capture-templates~ in order to use org-capture to make TODOs for the project to which the current buffer belongs. You can access org-capture mode with M-x org-capture, but it is recommended that you bind org-capture to some key.
+~org-projectile:template-or-project~ is identical to ~org-projectile:project-todo-completing-read~ except that it uses helm directly, and it will also complete existing ~org-capture-templates~. helm is not included as a dependency in this project, so you must install it manually to use this function.
+
+~org-projectile:project-todo-entry~ is a function that builds an entry that can be added to ~org-capture-templates~ in order to use org-capture to make TODOs for the project to which the current buffer belongs. You can access org-capture mode with ~M-x org-capture~, but it is recommended that you bind org-capture to some key.
 
 Both of these functions will create the relevant top level heading in the [[http://orgmode.org/][org-mode]] file stored in ~org-projectile:projects-file~ if it does not exist.
 
