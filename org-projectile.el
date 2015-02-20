@@ -172,11 +172,9 @@
    capture-template))
 
 ;;;###autoload
-(defun org-projectile:capture-for-current-project (&optional arg)
-  (interactive "P")
+(defun org-projectile:capture-for-current-project (&optional capture-template)
   (let ((project-name (projectile-project-name))
-        (template (if arg org-projectile:linked-capture-template
-                    org-projectile:capture-template)))
+        (template (or capture-template org-projectile:capture-template)))
     (if (and (projectile-project-p)
              project-name)
         (org-projectile:capture-for-project project-name template)
