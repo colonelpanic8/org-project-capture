@@ -33,14 +33,25 @@ Using jwiegley's excellent [[https://github.com/jwiegley/use-package][use-packag
 #+END_SRC
 
 * Usage
-~org-projectile:project-todo-completing-read~ opens a projectile-completing-read that allows the selection of a project heading under which to store the input that is subsequently captured in an ~org-capture~ buffer. Completion candidates for this function are generated using the project list returned from ~(projectile-relevant-known-projects)~ and the existing headings in ~org-projectile:projects-file~.
+** ~org-projectile:project-todo-completing-read~
+   opens a projectile-completing-read that allows the selection of a project heading under which to store the input that is subsequently captured in an ~org-capture~ buffer. Completion candidates for this function are generated using the project list returned from ~(projectile-relevant-known-projects)~ and the existing headings in ~org-projectile:projects-file~.
 
-~org-projectile:template-or-project~ is identical to ~org-projectile:project-todo-completing-read~ except that it uses helm directly, and it will also complete existing ~org-capture-templates~. helm is not included as a dependency in this project, so you must install it manually to use this function.
+** ~org-projectile:template-or-project~
+   is identical to ~org-projectile:project-todo-completing-read~ except that it uses helm directly, and it will also complete existing ~org-capture-templates~. helm is not included as a dependency in this project, so you MUST install it manually to use this function.
 
-~org-projectile:project-todo-entry~ is a function that builds an entry that can be added to ~org-capture-templates~ in order to use org-capture to make TODOs for the project to which the current buffer belongs. You can access org-capture mode with ~M-x org-capture~, but it is recommended that you bind org-capture to some key.
+** ~org-projectile:project-todo-entry~
+   is a function that builds an entry that can be added to ~org-capture-templates~ in order to use org-capture to make TODOs for the project to which the current buffer belongs. You can access org-capture mode with ~M-x org-capture~, but it is recommended that you bind org-capture to some key.
 
 Both of these functions will create the relevant top level heading in the [[http://orgmode.org/][org-mode]] file stored in ~org-projectile:projects-file~ if it does not exist.
 
+** Project headings are links
+   This means that if you run ~org-open-at-point~ when your cursor is over a linked heading, ~projectile-switch-project-action~ will be executed, and you will begin working in the relevant project. By default, emacs will prompt you about whether not to execute the elisp associated with the link. To disable this prompt, add
+
+#+BEGIN_SRC emacs-lisp
+(setq org-confirm-elisp-link-function nil)
+#+END_SRC
+
+to your configuration.
 * Customization
 Both ~org-projectile:project-todo-entry~ and ~org-projectile:project-todo-completing-read~ accept optional arguments that customize their behavior. The first argument to ~org-projectile:project-todo-entry~ is the character that will trigger the produced entry from org-capture. If no argument is supplied, the default value of ~p~ will be used. The second positional argument is the heading format that will be used. If no argument is supplied, the value of ~org-projectile:capture-template~ will be used as the capture template.
 
