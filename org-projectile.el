@@ -82,25 +82,39 @@
       (org-projectile:project-heading project-heading))
     project-heading))
 
+(defun org-projectile:get-link-description (heading)
+  (with-temp-buffer
+    (insert heading)
+    (beginning-of-buffer)
+    (if (re-search-forward org-any-link-re nil t)
+        (match-string-no-properties 4) heading)))
+
 (defun org-projectile:known-projects ()
   (delete-dups `(,@(mapcar #'org-projectile:project-heading-from-file
                            (projectile-relevant-known-projects))
                  ,@(org-map-entries
-                    (lambda () (nth 4 (org-heading-components))) nil
+                    (lambda () (org-projectile:get-link-description (nth 4 (org-heading-components)))) nil
                     (list org-projectile:projects-file)
                     (lambda ()
                       (when (< 1 (nth 1 (org-heading-components)))
                         (point)))))))
 
+(defun org-projectile:project-name-to-location-alist ()
+  (cl-loop for project-location in projectile-known-projects
+           collect `(,(file-name-nondirectory (directory-file-name project-location)) . ,project-location)))
+
+(defun org-projectile:project-location-from-name (name)
+  (cdr (assoc name (projectile-project-name-to-location-alist))))
+
 (defun org-projectile:capture-for-project (heading &optional capture-template)
   (org-capture-set-plist (org-projectile:project-todo-entry nil capture-template))
-  (with-current-buffer (find-file-noselect org-projectile:projects-file)
-    (org-projectile:project-heading heading))
   ;; TODO: super gross that this had to be copied from org-capture,
   ;; Unfortunately, it does not seem to be possible to call into org-capture
   ;; because it makes assumptions that make it impossible to set things up
   ;; properly
-  (let ((orig-buf (current-buffer))
+  (let ((heading-text (with-current-buffer (find-file-noselect org-projectile:projects-file)
+                        (org-projectile:project-heading heading)))
+        (orig-buf (current-buffer))
 	   (annotation (if (and (boundp 'org-capture-link-is-already-stored)
 				org-capture-link-is-already-stored)
 			   (plist-get org-store-link-plist :annotation)
@@ -119,11 +133,17 @@
                      :return-to-wconf (current-window-configuration)
                      :default-time
                      (or org-overriding-default-time
-                         (org-current-time))))
+                         (org-current-time)))
   (org-capture-put :template (org-capture-fill-template capture-template))
   (org-capture-set-target-location `(file+headline
-                                     ,org-projectile:projects-file ,heading))
+                                     ,org-projectile:projects-file ,heading-text)))
   (org-capture-place-template))
+
+(defun org-projectile:open-project (name)
+  (let* ((name-to-location (org-projectile:project-name-to-location-alist))
+         (entry (assoc name name-to-location)))
+    (when entry
+      (projectile-switch-project-by-name (cdr entry)))))
 
 (defun org-projectile:insert-or-goto-heading (heading)
   (goto-char (point-min))
@@ -131,19 +151,26 @@
     (error
      "Target buffer \"%s\" for file+headline should be in Org mode"
      (current-buffer)))
-  (if (re-search-forward
-       (format org-complex-heading-regexp-format (regexp-quote heading))
-       nil t)
-      (goto-char (point-at-bol))
-    (goto-char (point-max))
-    (or (bolp) (insert "\n"))
-    (insert "* " heading)))
+  (let ((linked-heading (org-projectile:linked-heading heading)))
+    (if (re-search-forward
+         (format org-complex-heading-regexp-format
+                 (format "%s\\|%s" (regexp-quote linked-heading) (regexp-quote heading)))
+         nil t)
+        (goto-char (point-at-bol))
+      (goto-char (point-max))
+      (or (bolp) (insert "\n"))
+      (insert "* " linked-heading)
+      linked-heading)))
+
+(defun org-projectile:linked-heading (heading)
+  (org-make-link-string (format "elisp:(org-projectile:open-project \"%s\")" heading) heading))
 
 (defun org-projectile:project-heading (heading)
-  (org-projectile:insert-or-goto-heading heading)
-  (hide-subtree)
-  (org-beginning-of-line)
-  (org-set-property "CATEGORY" heading))
+  (let ((heading-text (org-projectile:insert-or-goto-heading heading)))
+    (hide-subtree)
+    (org-beginning-of-line)
+    (org-set-property "CATEGORY" heading)
+    heading-text))
 
 (defun org-projectile:helm-source (&optional capture-template)
   (helm-build-sync-source "Org Capture Options:"
