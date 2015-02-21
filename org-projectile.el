@@ -33,8 +33,11 @@
 
 (defvar org-projectile:projects-file "~/org/projects.org")
 (defvar org-projectile:per-repo-filename "todo.org")
+
 (defvar org-projectile:capture-template "* TODO %?\n")
 (defvar org-projectile:linked-capture-template "* TODO %? %A\n")
+
+(defvar org-projectile:force-linked t)
 
 (defvar org-projectile:project-name-to-org-file
   'org-projectile:project-name-to-org-file-one-file)
@@ -116,15 +119,6 @@
   (file-name-nondirectory
    (directory-file-name (org-projectile:project-root-of-filepath filename))))
 
-;; is this still necessary?
-(defun org-projectile:insert-heading-for-filename (filename)
-  (let ((project-heading
-         (org-projectile:project-heading-from-file
-          filename)))
-    (with-current-buffer (find-file-noselect (org-projectile:project-name-to-org-file project-heading))
-      (org-projectile:project-heading project-heading))
-    project-heading))
-
 (defun org-projectile:get-link-description (heading)
   (with-temp-buffer
     (insert heading)
@@ -198,7 +192,16 @@
          (format org-complex-heading-regexp-format
                  (format "%s\\|%s" (regexp-quote linked-heading) (regexp-quote heading)))
          nil t)
-        (goto-char (point-at-bol))
+        (progn
+          (goto-char (point-at-bol))
+          (when (and org-projectile:force-linked
+                     (looking-at
+                      (format org-complex-heading-regexp-format (regexp-quote heading))))
+            (re-search-forward heading)
+            (org-show-subtree)
+            (delete-char (* (length heading) -1))
+            (insert linked-heading)
+            (goto-char (point-at-bol))))
       (progn
         (goto-char (point-max))
         (or (bolp) (insert "\n"))
