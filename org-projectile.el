@@ -134,9 +134,9 @@
                      :default-time
                      (or org-overriding-default-time
                          (org-current-time)))
-  (org-capture-put :template (org-capture-fill-template capture-template))
-  (org-capture-set-target-location `(file+headline
-                                     ,org-projectile:projects-file ,heading-text)))
+    (org-capture-put :template (org-capture-fill-template capture-template))
+    (org-capture-set-target-location `(file+headline
+                                       ,org-projectile:projects-file ,heading-text)))
   (org-capture-place-template))
 
 (defun org-projectile:open-project (name)
@@ -159,8 +159,8 @@
         (goto-char (point-at-bol))
       (goto-char (point-max))
       (or (bolp) (insert "\n"))
-      (insert "* " linked-heading)
-      linked-heading)))
+      (insert "* " linked-heading))
+    (nth 4 (org-heading-components))))
 
 (defun org-projectile:linked-heading (heading)
   (org-make-link-string (format "elisp:(org-projectile:open-project \"%s\")" heading) heading))
