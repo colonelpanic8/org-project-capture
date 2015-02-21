@@ -32,8 +32,53 @@
 (require 'projectile)
 
 (defvar org-projectile:projects-file "~/org/projects.org")
+(defvar org-projectile:per-repo-filename "todo.org")
 (defvar org-projectile:capture-template "* TODO %?\n")
 (defvar org-projectile:linked-capture-template "* TODO %? %A\n")
+
+(defvar org-projectile:project-name-to-org-file
+  'org-projectile:project-name-to-org-file-one-file)
+(defvar org-projectile:project-name-to-location-one-file
+  'org-projectile:project-name-to-location-one-file)
+(defvar org-projectile:project-files-to-scan
+  'org-projectile:project-files-to-scan-one-file)
+
+(defun org-projectile:project-name-to-org-file-one-file (project-name)
+  org-projectile:projects-file)
+
+(defun org-projectile:project-name-to-location-one-file (project-name)
+  (org-projectile:project-heading project-name)
+  (org-end-of-line))
+
+(defun org-projectile:project-files-to-scan-one-file ()
+  (list org-projectile:projects-file))
+
+(defun org-projectile:project-name-to-org-file-per-repo (project-name)
+  (concat (org-projectile:project-location-from-name project-name)
+          org-projectile:per-repo-filename))
+
+(defun org-projectile:project-name-to-location-per-repo (project-name)
+  (end-of-buffer))
+
+(defun org-projectile:project-files-to-scan-per-repo ()
+  '())
+
+(defun org-projectile:per-repo ()
+  (interactive)
+  (setq org-projectile:project-name-to-org-file 'org-projectile:project-name-to-org-file-per-repo)
+  (setq org-projectile:project-name-to-location 'org-projectile:project-name-to-location-per-repo)
+  (setq org-projectile:project-files-to-scan 'org-projectile:project-files-to-scan-per-repo))
+
+(defun org-projectile:one-file (&optional filename)
+  (interactive)
+  (setq org-projectile:project-name-to-org-file 'org-projectile:project-name-to-org-file-one-file)
+  (setq org-projectile:project-name-to-location 'org-projectile:project-name-to-location-one-file)
+  (setq org-projectile:project-files-to-scan 'org-projectile:project-files-to-scan-one-file))
+
+(defun org-projectile:location-for-project (project-name)
+  (let* ((filename (funcall org-projectile:project-name-to-org-file project-name)))
+    (switch-to-buffer (find-file-noselect filename))
+    (funcall org-projectile:project-name-to-location project-name)))
 
 (defun org-projectile:project-root-of-filepath (filepath)
   ;; TODO(@IvanMalison): Replace this with projectile function if
@@ -61,24 +106,22 @@
   (unless capture-character (setq capture-character "p"))
   (unless capture-heading (setq capture-heading "Project Todo"))
   `(,capture-character ,capture-heading entry
-    (file+function ,org-projectile:projects-file
-                   (lambda () (let ((heading
-                                     (org-projectile:insert-heading-for-filename
-                                      (org-capture-get :original-file))))
-                                (org-projectile:insert-or-goto-heading heading)
-                                (org-end-of-line)
-                                heading)))
+                       (function
+                        (lambda () (org-projectile:location-for-project
+                                    (org-projectile:project-heading-from-file
+                                     (org-capture-get :original-file)))))
     ,capture-template))
 
 (defun org-projectile:project-heading-from-file (filename)
   (file-name-nondirectory
    (directory-file-name (org-projectile:project-root-of-filepath filename))))
 
+;; is this still necessary?
 (defun org-projectile:insert-heading-for-filename (filename)
   (let ((project-heading
          (org-projectile:project-heading-from-file
           filename)))
-    (with-current-buffer (find-file-noselect org-projectile:projects-file)
+    (with-current-buffer (find-file-noselect (org-projectile:project-name-to-org-file project-heading))
       (org-projectile:project-heading project-heading))
     project-heading))
 
@@ -94,27 +137,26 @@
                            (projectile-relevant-known-projects))
                  ,@(org-map-entries
                     (lambda () (org-projectile:get-link-description (nth 4 (org-heading-components)))) nil
-                    (list org-projectile:projects-file)
+                    (funcall org-projectile:project-files-to-scan)
                     (lambda ()
                       (when (< 1 (nth 1 (org-heading-components)))
                         (point)))))))
 
 (defun org-projectile:project-name-to-location-alist ()
   (cl-loop for project-location in projectile-known-projects
-           collect `(,(file-name-nondirectory (directory-file-name project-location)) . ,project-location)))
+           collect `(,(file-name-nondirectory (directory-file-name project-location)) .
+                     ,project-location)))
 
 (defun org-projectile:project-location-from-name (name)
-  (cdr (assoc name (projectile-project-name-to-location-alist))))
+  (cdr (assoc name (org-projectile:project-name-to-location-alist))))
 
-(defun org-projectile:capture-for-project (heading &optional capture-template)
+(defun org-projectile:capture-for-project (project-name &optional capture-template)
   (org-capture-set-plist (org-projectile:project-todo-entry nil capture-template))
   ;; TODO: super gross that this had to be copied from org-capture,
   ;; Unfortunately, it does not seem to be possible to call into org-capture
   ;; because it makes assumptions that make it impossible to set things up
   ;; properly
-  (let ((heading-text (with-current-buffer (find-file-noselect org-projectile:projects-file)
-                        (org-projectile:project-heading heading)))
-        (orig-buf (current-buffer))
+  (let ((orig-buf (current-buffer))
 	   (annotation (if (and (boundp 'org-capture-link-is-already-stored)
 				org-capture-link-is-already-stored)
 			   (plist-get org-store-link-plist :annotation)
@@ -135,8 +177,8 @@
                      (or org-overriding-default-time
                          (org-current-time)))
     (org-capture-put :template (org-capture-fill-template capture-template))
-    (org-capture-set-target-location `(file+headline
-                                       ,org-projectile:projects-file ,heading-text)))
+    (org-capture-set-target-location
+     `(function ,(lambda () (org-projectile:location-for-project project-name)))))
   (org-capture-place-template))
 
 (defun org-projectile:open-project (name)
@@ -157,9 +199,10 @@
                  (format "%s\\|%s" (regexp-quote linked-heading) (regexp-quote heading)))
          nil t)
         (goto-char (point-at-bol))
-      (goto-char (point-max))
-      (or (bolp) (insert "\n"))
-      (insert "* " linked-heading))
+      (progn
+        (goto-char (point-max))
+        (or (bolp) (insert "\n"))
+        (insert "* " linked-heading)))
     (nth 4 (org-heading-components))))
 
 (defun org-projectile:linked-heading (heading)
