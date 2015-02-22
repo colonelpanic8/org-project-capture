@@ -14,6 +14,7 @@ Before using org-projectile, you must specify the file you would like to use for
   (setq org-projectile:projects-file
         "/your/path/to/an/org/file/for/storing/project/todos.org")
   (add-to-list 'org-capture-templates (org-projectile:project-todo-entry))
+  (setq org-agenda-files (append org-agenda-files (org-projectile:todo-files)))
   (global-set-key (kbd "C-c c") 'org-capture)
   (global-set-key (kbd "C-c n p") 'org-projectile:project-todo-completing-read)
 #+END_SRC
@@ -29,6 +30,7 @@ Here is the same configuration expressed using jwiegley's excellent [[https://gi
     (progn
       (setq org-projectile:projects-file 
             "/your/path/to/an/org/file/for/storing/projects.org")
+      (setq org-agenda-files (append org-agenda-files (org-projectile:todo-files)))
       (add-to-list 'org-capture-templates (org-projectile:project-todo-entry "p")))
     :ensure t)
 #+END_SRC
@@ -40,6 +42,7 @@ If you would prefer to have an org file for each project that resides in the pro
   (require 'org-projectile)
   (org-projectile:per-repo)
   (setq org-projectile:per-repo-filename "my_project_todo_filename.org")
+  (setq org-agenda-files (append org-agenda-files (org-projectile:todo-files)))
   (global-set-key (kbd "C-c c") 'org-capture)
   (global-set-key (kbd "C-c n p") 'org-projectile:project-todo-completing-read)
 #+END_SRC
@@ -98,5 +101,7 @@ If you wish to use this type of functionality with ~org-projectile:project-todo-
 The variables 
 ~org-projectile:project-name-to-org-file~
 ~org-projectile:project-name-to-location-one-file~
-~org-projectile:project-files-to-scan~ allow the customization of file/heading selection for TODO storage.
+ allow the customization of file/heading selection for TODO storage.
 
+As an example of what is possible with these functions, take a look at
+~org-projectile:project-name-to-org-file-hybrid~.
