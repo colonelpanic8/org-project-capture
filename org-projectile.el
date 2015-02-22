@@ -43,9 +43,8 @@
   'org-projectile:project-name-to-org-file-one-file)
 (defvar org-projectile:project-name-to-location
   'org-projectile:project-name-to-location-one-file)
-(defvar org-projectile:project-files-to-scan
-  'org-projectile:project-files-to-scan-one-file)
 
+;; For a single projects file
 (defun org-projectile:project-name-to-org-file-one-file (project-name)
   org-projectile:projects-file)
 
@@ -53,9 +52,12 @@
   (org-projectile:project-heading project-name)
   (org-end-of-line))
 
-(defun org-projectile:project-files-to-scan-one-file ()
-  (list org-projectile:projects-file))
+(defun org-projectile:one-file ()
+  (interactive)
+  (setq org-projectile:project-name-to-org-file 'org-projectile:project-name-to-org-file-one-file)
+  (setq org-projectile:project-name-to-location 'org-projectile:project-name-to-location-one-file))
 
+;; For repo files in the projectile project path
 (defun org-projectile:project-name-to-org-file-per-repo (project-name)
   (concat (org-projectile:project-location-from-name project-name)
           org-projectile:per-repo-filename))
@@ -63,20 +65,39 @@
 (defun org-projectile:project-name-to-location-per-repo (project-name)
   (end-of-buffer))
 
-(defun org-projectile:project-files-to-scan-per-repo ()
-  '())
-
 (defun org-projectile:per-repo ()
   (interactive)
   (setq org-projectile:project-name-to-org-file 'org-projectile:project-name-to-org-file-per-repo)
-  (setq org-projectile:project-name-to-location 'org-projectile:project-name-to-location-per-repo)
-  (setq org-projectile:project-files-to-scan 'org-projectile:project-files-to-scan-per-repo))
+  (setq org-projectile:project-name-to-location 'org-projectile:project-name-to-location-per-repo))
 
-(defun org-projectile:one-file (&optional filename)
+;; Hybrid of the two approaches mentioned above
+(defvar org-projectile:project-to-approach nil)
+(defvar org-projectile:default-approach 'one-file)
+
+(defun org-projectile:get-approach-for-project (project-name)
+  (or (cdr (assoc project-name org-projectile:project-to-approach))
+                      org-projectile:default-approach))
+
+(defun org-projectile:project-name-to-org-file-hybrid (project-name)
+  (let ((approach (org-projectile:get-approach-for-project project-name)))
+    (cond
+     ((equal approach 'one-file)
+      (org-projectile:project-name-to-org-file-one-file project-name))
+     ((equal approach 'per-repo)
+      (org-projectile:project-name-to-org-file-per-repo project-name)))))
+
+(defun org-projectile:project-name-to-location-hybrid (project-name)
+  (let ((approach (org-projectile:get-approach-for-project project-name)))
+    (cond
+     ((equal approach 'one-file)
+      (org-projectile:project-name-to-location-one-file project-name))
+     ((equal approach 'per-repo)
+      (org-projectile:project-name-to-location-per-repo project-name)))))
+
+(defun org-projectile:hybrid ()
   (interactive)
-  (setq org-projectile:project-name-to-org-file 'org-projectile:project-name-to-org-file-one-file)
-  (setq org-projectile:project-name-to-location 'org-projectile:project-name-to-location-one-file)
-  (setq org-projectile:project-files-to-scan 'org-projectile:project-files-to-scan-one-file))
+  (setq org-projectile:project-name-to-org-file 'org-projectile:project-name-to-org-file-hybrid)
+  (setq org-projectile:project-name-to-location 'org-projectile:project-name-to-location-hybrid))
 
 (defun org-projectile:location-for-project (project-name)
   (let* ((filename (funcall org-projectile:project-name-to-org-file project-name)))
@@ -131,10 +152,16 @@
                            (projectile-relevant-known-projects))
                  ,@(org-map-entries
                     (lambda () (org-projectile:get-link-description (nth 4 (org-heading-components)))) nil
-                    (funcall org-projectile:project-files-to-scan)
+                    (org-projectile:todo-files)
                     (lambda ()
                       (when (< 1 (nth 1 (org-heading-components)))
                         (point)))))))
+
+(defun org-projectile:todo-files ()
+  (remove-if-not #'file-exists-p
+                 (delete-dups (cl-loop for project-name in (org-projectile:known-projects)
+                        collect (funcall org-projectile:project-name-to-org-file
+                                         project-name)))))
 
 (defun org-projectile:project-name-to-location-alist ()
   (cl-loop for project-location in projectile-known-projects
