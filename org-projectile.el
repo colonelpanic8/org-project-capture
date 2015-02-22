@@ -41,7 +41,7 @@
 
 (defvar org-projectile:project-name-to-org-file
   'org-projectile:project-name-to-org-file-one-file)
-(defvar org-projectile:project-name-to-location-one-file
+(defvar org-projectile:project-name-to-location
   'org-projectile:project-name-to-location-one-file)
 (defvar org-projectile:project-files-to-scan
   'org-projectile:project-files-to-scan-one-file)
