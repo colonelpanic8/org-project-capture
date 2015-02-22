@@ -12,13 +12,14 @@ Before using org-projectile, you must specify the file you would like to use for
 #+BEGIN_SRC emacs-lisp
   (require 'org-projectile)
   (setq org-projectile:projects-file
-        "/your/path/to/an/org/file/for/storing/projects.org")
+        "/your/path/to/an/org/file/for/storing/project/todos.org")
   (add-to-list 'org-capture-templates (org-projectile:project-todo-entry))
   (global-set-key (kbd "C-c c") 'org-capture)
   (global-set-key (kbd "C-c n p") 'org-projectile:project-todo-completing-read)
 #+END_SRC
 
-Using jwiegley's excellent [[https://github.com/jwiegley/use-package][use-package]]:
+** use-package
+Here is the same configuration expressed using jwiegley's excellent [[https://github.com/jwiegley/use-package][use-package]]:
 
 #+BEGIN_SRC emacs-lisp
   (use-package org-projectile
@@ -30,6 +31,17 @@ Using jwiegley's excellent [[https://github.com/jwiegley/use-package][use-packag
             "/your/path/to/an/org/file/for/storing/projects.org")
       (add-to-list 'org-capture-templates (org-projectile:project-todo-entry "p")))
     :ensure t)
+#+END_SRC
+
+** per-repo todo files
+If you would prefer to have an org file for each project that resides in the project directory, add the following elisp to your configuration:
+
+#+BEGIN_SRC emacs-lisp
+  (require 'org-projectile)
+  (org-projectile:per-repo)
+  (setq org-projectile:per-repo-filename "my_project_todo_filename.org")
+  (global-set-key (kbd "C-c c") 'org-capture)
+  (global-set-key (kbd "C-c n p") 'org-projectile:project-todo-completing-read)
 #+END_SRC
 
 * Usage
@@ -53,7 +65,14 @@ Both of these functions will create the relevant top level heading in the [[http
 
 to your configuration.
 * Customization
-Both ~org-projectile:project-todo-entry~ and ~org-projectile:project-todo-completing-read~ accept optional arguments that customize their behavior. The first argument to ~org-projectile:project-todo-entry~ is the character that will trigger the produced entry from org-capture. If no argument is supplied, the default value of ~p~ will be used. The second positional argument is the heading format that will be used. If no argument is supplied, the value of ~org-projectile:capture-template~ will be used as the capture template.
+** capture templates
+Both ~org-projectile:project-todo-entry~ and ~org-projectile:project-todo-completing-read~ accept optional arguments that customize their behavior.
+*** Capture template key
+The first argument to ~org-projectile:project-todo-entry~ is the character that will trigger the produced entry from org-capture. If no argument is supplied, the default value of ~p~ will be used.
+
+*** Non-default capture template
+
+The second positional argument to ~org-projectile:project-todo-entry~ is the heading format that will be used. If no argument is supplied, the value of ~org-projectile:capture-template~ will be used as the capture template.
 
 The first argument to ~org-projectile:project-todo-completing-read~ does the same thing as the second argument to ~org-projectile:project-todo-entry~.
 
@@ -74,3 +93,10 @@ If you wish to use this type of functionality with ~org-projectile:project-todo-
   (org-projectile:project-todo-completing-read 
     (if arg "* TODO %? %a\n" nil)))
 #+END_SRC
+
+*** Custom TODO location storage specification
+The variables 
+~org-projectile:project-name-to-org-file~
+~org-projectile:project-name-to-location-one-file~
+~org-projectile:project-files-to-scan~ allow the customization of file/heading selection for TODO storage.
+
