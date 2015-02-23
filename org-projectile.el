@@ -273,5 +273,15 @@
                                (org-projectile:known-projects))
    capture-template))
 
+;;;###autoload
+(defun org-projectile:capture-for-current-project (&optional capture-template)
+  (let ((project-name (projectile-project-name))
+        (template (or capture-template org-projectile:capture-template)))
+    (if (and (projectile-project-p)
+             project-name)
+        (org-projectile:capture-for-project project-name template)
+      (error (format "%s is not a recognized projectile project."
+                     project-name)))))
+
 (provide 'org-projectile)
 ;;; org-projectile.el ends here
