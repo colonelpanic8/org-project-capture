@@ -159,7 +159,9 @@
 
 (defun org-projectile:todo-files ()
   (remove-if-not #'file-exists-p
-                 (delete-dups (cl-loop for project-name in (org-projectile:known-projects)
+                 (delete-dups (cl-loop for project-name in
+                                       (mapcar #'org-projectile:project-heading-from-file
+                                               (projectile-relevant-known-projects))
                         collect (funcall org-projectile:project-name-to-org-file
                                          project-name)))))
 
