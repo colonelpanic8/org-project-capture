@@ -6,7 +6,7 @@
 ;; Keywords: org projectile todo
 ;; URL: https://github.com/IvanMalison/org-projectile
 ;; Version: 0.0.2
-;; Package-Requires: ((projectile "0.11.0"))
+;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
