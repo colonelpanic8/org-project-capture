@@ -47,6 +47,16 @@ If you would prefer to have an org file for each project that resides in the pro
   (global-set-key (kbd "C-c n p") 'org-projectile:project-todo-completing-read)
 #+END_SRC
 
+** If you would like to be prompted on a for the org file that should be used to store tasks for any project for which such a file has not already been selected you can use the org-projectile's prompt mode. A minimal configuration with this mode enabled follows:
+
+#+BEGIN_SRC emacs-lisp
+  (require 'org-projectile)
+  (org-projectile:prompt)
+  (setq org-agenda-files (append org-agenda-files (org-projectile:todo-files)))
+  (global-set-key (kbd "C-c c") 'org-capture)
+  (global-set-key (kbd "C-c n p") 'org-projectile:project-todo-completing-read)
+#+END_SRC
+
 * Usage
 ** ~org-projectile:project-todo-completing-read~
    opens a projectile-completing-read that allows the selection of a project heading under which to store the input that is subsequently captured in an ~org-capture~ buffer. Completion candidates for this function are generated using the project list returned from ~(projectile-relevant-known-projects)~ and the existing headings in ~org-projectile:projects-file~.

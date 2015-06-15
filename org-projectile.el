@@ -252,6 +252,9 @@
                       (when (< 1 (nth 1 (org-heading-components)))
                         (point)))))))
 
+(defun org-projectile:todo-files ()
+  (funcall org-projectile:todo-files))
+
 (defun org-projectile:default-todo-files ()
   (remove-if-not #'file-exists-p
                  (delete-dups (cl-loop for project-name in
