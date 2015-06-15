@@ -48,7 +48,7 @@ If you would prefer to have an org file for each project that resides in the pro
 #+END_SRC
 
 ** prompt-mode
-If you would like to be prompted on a for the org file that should be used to store tasks for any project for which such a file has not already been selected you can use the org-projectile's prompt mode. A minimal configuration with this mode enabled follows:
+If you would like to be prompted for the org file that should be used to store tasks for any project for which such a file has not already been selected, you can use the org-projectile's prompt mode. What follows is a minimal configuration with this mode enabled:
 
 #+BEGIN_SRC emacs-lisp
   (require 'org-projectile)
