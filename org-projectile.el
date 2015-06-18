@@ -129,9 +129,10 @@
 (defun org-projectile:update-project-to-org-filepath (project-name
                                                       org-file &optional project-to-org-filepath-filepath)
   (let* ((project-to-org-filepath (org-projectile:get-project-to-org-filepath project-to-org-filepath-filepath))
+         (org-file-truename (file-truename org-file))
          (current-value (assoc project-name project-to-org-filepath)))
-    (if current-value (setcdr current-value org-file)
-      (add-to-list 'project-to-org-filepath `(,project-name . ,org-file)))
+    (if current-value (setcdr current-value org-file-truename)
+      (add-to-list 'project-to-org-filepath `(,project-name . ,org-file-truename)))
     (org-projectile:write-project-to-org-filepath project-to-org-filepath project-to-org-filepath-filepath)))
 
 (defun org-projectile:get-project-to-org-filepath (&optional project-to-org-filepath-filepath)
