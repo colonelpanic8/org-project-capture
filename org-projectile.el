@@ -38,6 +38,7 @@
 (defvar org-projectile:linked-capture-template "* TODO %? %A\n")
 
 (defvar org-projectile:force-linked t)
+(defvar org-projectile:subheading-selection t)
 
 (defvar org-projectile:project-name-to-org-file
   'org-projectile:project-name-to-org-file-one-file)
@@ -51,7 +52,8 @@
 
 (defun org-projectile:project-name-to-location-one-file (project-name)
   (org-projectile:project-heading project-name)
-  (org-end-of-line))
+  (when org-projectile:subheading-selection
+    (org-projectile:prompt-for-subheadings 'tree)))
 
 (defun org-projectile:one-file ()
   (interactive)
@@ -368,6 +370,35 @@
         (last-match t))
     (while last-match (setq last-match (re-search-forward ":END:" end-of-heading t)))
     (point)))
+
+(defun org-projectile:prompt-for-subheadings (&optional recursive)
+  (let ((subheadings-to-point (org-projectile:get-subheadings))
+        (point-at-start (save-excursion (org-back-to-heading) (point))))
+    (when (> (length subheadings-to-point) 1)
+      (org-projectile:prompt-for-and-move-to-subheading subheadings-to-point)
+      (when recursive
+        (unless (eq point-at-start (save-excursion (org-back-to-heading) (point)))
+          (org-projectile:prompt-for-subheadings))))))
+
+(defun org-projectile:prompt-for-and-move-to-subheading (subheadings-to-point)
+  (cond ((eq projectile-completion-system 'helm)
+         (let ((selection (helm :sources (org-projectile:helm-subheadings-source subheadings-to-point))))
+           (goto-char selection)))))
+
+(defun org-projectile:helm-subheadings-source (subheadings-to-point)
+  (helm-build-sync-source "Choose a subheading:"
+    :candidates subheadings-to-point))
+
+(defun org-projectile:get-subheadings (&optional scope)
+  (interactive)
+  (unless scope (setq scope 'tree))
+  (org-show-subtree)
+  (save-excursion
+    (org-map-entries (lambda () `(,(org-get-heading) . ,(point))) nil scope
+                     (lambda () (when (and (nth 2 (org-heading-components))
+                                           (not (org-entry-get nil "ORG-PROJECTILE-SUBHEADINGS")))
+                                  (org-end-of-subtree))))))
+
 (defun org-projectile:helm-source (&optional capture-template)
   (helm-build-sync-source "Org Capture Options:"
     :candidates (cl-loop for project in (org-projectile:known-projects)
@@ -375,6 +406,14 @@
     :action `(("Do capture" .
                ,(lambda (project)
                   (org-projectile:capture-for-project project capture-template))))))
+
+;;;###autoload
+(defun org-projectile:toggle-subheading ()
+  (interactive)
+  (let ((was-enabled (org-entry-get nil "ORG-PROJECTILE-SUBHEADINGS")))
+    (if was-enabled
+        (org-delete-property "ORG-PROJECTILE-SUBHEADINGS")
+      (org-set-property "ORG-PROJECTILE-SUBHEADINGS" "t"))))
 
 ;;;###autoload
 (defun org-projectile:template-or-project (&optional arg)
