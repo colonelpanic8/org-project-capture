@@ -131,6 +131,8 @@
   (let* ((project-to-org-filepath (org-projectile:get-project-to-org-filepath project-to-org-filepath-filepath))
          (org-file-truename (file-truename org-file))
          (current-value (assoc project-name project-to-org-filepath)))
+    (when (or (not (file-exists-p org-file-truename)) (file-directory-p org-file-truename))
+      (throw "The provided filepath is invalid" org-file))
     (if current-value (setcdr current-value org-file-truename)
       (add-to-list 'project-to-org-filepath `(,project-name . ,org-file-truename)))
     (org-projectile:write-project-to-org-filepath project-to-org-filepath project-to-org-filepath-filepath)))
