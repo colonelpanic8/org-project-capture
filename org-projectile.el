@@ -194,10 +194,19 @@
   (setq org-projectile:project-name-to-org-file 'org-projectile:project-name-to-org-file-prompt)
   (setq org-projectile:project-name-to-location 'org-projectile:project-name-to-location-prompt))
 
-(defun org-projectile:location-for-project (project-name)
+(defun org-projectile:location-for-project (project-name &optional for-insert)
   (let* ((filename (funcall org-projectile:project-name-to-org-file project-name)))
     (switch-to-buffer (find-file-noselect filename))
-    (funcall org-projectile:project-name-to-location project-name)))
+    (funcall org-projectile:project-name-to-location project-name)
+    (org-end-of-line)
+    (org-projectile:end-of-properties)
+    ;; It sucks that this has to be done, but we have to insert a
+    ;; subheading if the entry does not have one in order to convince
+    ;; capture to actually insert the template as a subtree of the
+    ;; selected entry. We return a marker where the dummy subheading
+    ;; was created so that it can be deleted later.
+    (when (and for-insert (not (save-excursion (org-goto-first-child))))
+      (save-excursion (org-insert-subheading nil) (point-marker)))))
 
 (defun org-projectile:project-root-of-filepath (filepath)
   ;; TODO(@IvanMalison): Replace this with projectile function if
@@ -278,11 +287,11 @@
   ;; because it makes assumptions that make it impossible to set things up
   ;; properly
   (let ((orig-buf (current-buffer))
-	   (annotation (if (and (boundp 'org-capture-link-is-already-stored)
-				org-capture-link-is-already-stored)
-			   (plist-get org-store-link-plist :annotation)
-			 (ignore-errors (org-store-link nil))))
-	   initial)
+        (annotation (if (and (boundp 'org-capture-link-is-already-stored)
+                             org-capture-link-is-already-stored)
+                        (plist-get org-store-link-plist :annotation)
+                      (ignore-errors (org-store-link nil))))
+        org-projectile:subheading-cleanup-marker)
     (org-capture-put :original-buffer orig-buf
                      :original-file (or (buffer-file-name orig-buf)
                                         (and (featurep 'dired)
@@ -299,8 +308,16 @@
                          (org-current-time)))
     (org-capture-put :template (org-capture-fill-template capture-template))
     (org-capture-set-target-location
-     `(function ,(lambda () (org-projectile:location-for-project project-name)))))
-  (org-capture-place-template))
+     `(function ,(lambda () (setq org-projectile:subheading-cleanup-marker
+                                  (org-projectile:location-for-project project-name t)))))
+    (org-capture-place-template)
+    (when org-projectile:subheading-cleanup-marker
+      (org-projectile:cleanup-subheading org-projectile:subheading-cleanup-marker))))
+
+(defun org-projectile:cleanup-subheading (marker)
+  (with-current-buffer (marker-buffer marker)
+    (save-excursion (goto-char (marker-position marker))
+    (kill-whole-line))))
 
 (defun org-projectile:open-project (name)
   (let* ((name-to-location (org-projectile:project-name-to-location-alist))
@@ -345,6 +362,12 @@
     (org-set-property "CATEGORY" heading)
     heading-text))
 
+(defun org-projectile:end-of-properties ()
+  (interactive)
+  (let ((end-of-heading (save-excursion (outline-next-heading) (point)))
+        (last-match t))
+    (while last-match (setq last-match (re-search-forward ":END:" end-of-heading t)))
+    (point)))
 (defun org-projectile:helm-source (&optional capture-template)
   (helm-build-sync-source "Org Capture Options:"
     :candidates (cl-loop for project in (org-projectile:known-projects)
