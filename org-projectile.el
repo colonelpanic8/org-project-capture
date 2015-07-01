@@ -106,6 +106,7 @@
   (setq org-projectile:project-name-to-location 'org-projectile:project-name-to-location-hybrid))
 
 ;; Prompt for org file location on a per project basis
+(defvar org-projectile:find-org-file-for-project-function nil)
 (defvar org-projectile:keep-project-to-org-filepath-in-memory nil)
 (defvar org-projectile:project-to-org-filepath 'not-yet-read)
 (defvar org-projectile:project-to-org-filepath-filepath
@@ -150,17 +151,24 @@
 (defun org-projectile:project-name-to-org-file-prompt (project-name &optional project-to-org-filepath-filepath)
   (let ((current (assoc project-name (org-projectile:get-project-to-org-filepath))))
     (if current (cdr current)
-      (let ((search-result (org-projectile:find-project-in-known-files project-name)))
-        (if search-result
-            (progn (org-projectile:update-project-to-org-filepath project-name search-result) search-result)
-          (org-projectile:prompt-for-project-name project-name
-                                                  project-to-org-filepath-filepath))))))
+      (let ((org-filepath (org-projectile:find-project-in-known-files project-name)))
+        (unless org-filepath
+          (setq org-filepath (org-projectile:no-org-file-for-project project-name
+                                                                     project-to-org-filepath-filepath)))
+        (org-projectile:update-project-to-org-filepath project-name org-filepath)
+        org-filepath))))
+
+(defun org-projectile:no-org-file-for-project (project-name &optional project-to-org-filepath-filepath)
+  (let ((org-filepath (when org-projectile:find-org-file-for-project-function
+                        (funcall org-projectile:find-org-file-for-project-function project-name))))
+    (unless org-filepath
+      (setq org-filepath (org-projectile:prompt-for-project-name
+                          project-name project-to-org-filepath-filepath)))
+    org-filepath))
 
 (defun org-projectile:prompt-for-project-name (project-name &optional project-to-org-filepath-filepath)
-  (let ((org-filepath (read-file-name (concat "org-mode file for " project-name ": ")
-                                      (file-name-directory org-projectile:projects-file))))
-    (org-projectile:update-project-to-org-filepath project-name org-filepath project-to-org-filepath-filepath)
-    org-filepath))
+  (read-file-name (concat "org-mode file for " project-name ": ")
+                  (file-name-directory org-projectile:projects-file)))
 
 (defun org-projectile:set-project-file-default (&optional project-to-org-filepath-filepath)
   (interactive)
