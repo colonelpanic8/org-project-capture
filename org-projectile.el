@@ -122,9 +122,10 @@
 (defun org-projectile:read-project-to-org-filepath (&optional project-to-org-filepath-filepath)
   (unless project-to-org-filepath-filepath
     (setq project-to-org-filepath-filepath org-projectile:project-to-org-filepath-filepath))
-  (with-temp-buffer
-    (insert-file-contents project-to-org-filepath-filepath)
-    (read (buffer-string))))
+  (when (file-exists-p project-to-org-filepath-filepath)
+    (with-temp-buffer
+      (insert-file-contents project-to-org-filepath-filepath)
+      (read (buffer-string)))))
 
 (defun org-projectile:update-project-to-org-filepath (project-name
                                                       org-file &optional project-to-org-filepath-filepath)
