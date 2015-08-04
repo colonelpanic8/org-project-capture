@@ -38,6 +38,7 @@
 (defvar org-projectile:linked-capture-template "* TODO %? %A\n")
 
 (defvar org-projectile:force-linked t)
+(defvar org-projectile:counts-in-heading t)
 (defvar org-projectile:subheading-selection t)
 
 (defvar org-projectile:project-name-to-org-file
@@ -365,7 +366,8 @@
       (progn
         (goto-char (point-max))
         (or (bolp) (insert "\n"))
-        (insert "* " linked-heading)))
+        (insert "* " linked-heading)
+        (when org-projectile:counts-in-heading (insert " [/]"))))
     (nth 4 (org-heading-components))))
 
 (defun org-projectile:linked-heading (heading)
