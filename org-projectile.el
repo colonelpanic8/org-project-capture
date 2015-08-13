@@ -327,6 +327,13 @@
     (org-capture-set-target-location
      `(function ,(lambda () (setq org-projectile:subheading-cleanup-marker
                                   (org-projectile:location-for-project project-name t)))))
+    ;; Apparently this needs to be forced because (org-at-heading-p)
+    ;; will not be true and so `org-capture-set-target-location` will
+    ;; set this value to nil.
+    ;; TODO(@IvanMalison): Perhaps there is a better way to do this?
+    ;; Maybe something that would allow us to get rid of the horrible
+    ;; subheading-cleanup-marker hack?
+    (org-capture-put :target-entry-p t)
     (org-capture-place-template)
     (when org-projectile:subheading-cleanup-marker
       (org-projectile:cleanup-subheading org-projectile:subheading-cleanup-marker))))
