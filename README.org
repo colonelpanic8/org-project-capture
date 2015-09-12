@@ -4,6 +4,9 @@ org-projectile provides functions for the creation of [[http://orgmode.org/][org
 
 * Installation
 
+  #+ATTR_HTML: title="Join the chat at https://gitter.im/IvanMalison/org-projectile"
+  [[https://gitter.im/IvanMalison/org-projectile?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge][file:https://badges.gitter.im/Join%20Chat.svg]]
+
 Install from MELPA with ~M-x package-install org-projectile~. See the [[https://github.com/milkypostman/melpa][melpa repository]] for details about how to set up MELPA if you have not already done so.
 
 * Setup
