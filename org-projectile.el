@@ -28,6 +28,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'org-capture)
 (require 'projectile)
 
@@ -48,7 +49,7 @@
 (defvar org-projectile:todo-files 'org-projectile:default-todo-files)
 
 ;; For a single projects file
-(defun org-projectile:project-name-to-org-file-one-file (project-name)
+(defun org-projectile:project-name-to-org-file-one-file (_project-name)
   org-projectile:projects-file)
 
 (defun org-projectile:project-name-to-location-one-file (project-name)
@@ -67,8 +68,8 @@
   (concat (org-projectile:project-location-from-name project-name)
           org-projectile:per-repo-filename))
 
-(defun org-projectile:project-name-to-location-per-repo (project-name)
-  (end-of-buffer))
+(defun org-projectile:project-name-to-location-per-repo (_project-name)
+  (goto-char (point-max)))
 
 (defun org-projectile:per-repo ()
   (interactive)
@@ -137,7 +138,7 @@
     (when (or (not (file-exists-p org-file-truename)) (file-directory-p org-file-truename))
       (throw "The provided filepath is invalid" org-file))
     (if current-value (setcdr current-value org-file-truename)
-      (add-to-list 'project-to-org-filepath `(,project-name . ,org-file-truename)))
+      (cl-pushnew 'project-to-org-filepath `(,project-name . ,org-file-truename)))
     (org-projectile:write-project-to-org-filepath project-to-org-filepath project-to-org-filepath-filepath)))
 
 (defun org-projectile:get-project-to-org-filepath (&optional project-to-org-filepath-filepath)
@@ -167,15 +168,14 @@
                           project-name project-to-org-filepath-filepath)))
     org-filepath))
 
-(defun org-projectile:prompt-for-project-name (project-name &optional project-to-org-filepath-filepath)
+(defun org-projectile:prompt-for-project-name (project-name &optional _project-to-org-filepath-filepath)
   (read-file-name (concat "org-mode file for " project-name ": ")
                   (file-name-directory org-projectile:projects-file)))
 
 (defun org-projectile:set-project-file-default (&optional project-to-org-filepath-filepath)
   (interactive)
   (let ((org-filepath (read-file-name "org-mode file: "
-                                      (file-name-directory org-projectile:projects-file)))
-        (project-to-org-filepath (org-projectile:get-project-to-org-filepath)))
+                                      (file-name-directory org-projectile:projects-file))))
     (cl-loop for project-name being the elements of (org-projectile:known-projects) do
              (org-projectile:update-project-to-org-filepath project-name
                                                             org-filepath project-to-org-filepath-filepath))
@@ -264,7 +264,7 @@
 (defun org-projectile:get-link-description (heading)
   (with-temp-buffer
     (insert heading)
-    (beginning-of-buffer)
+    (goto-char (point-min))
     (if (re-search-forward org-any-link-re nil t)
         (match-string-no-properties 4) heading)))
 
@@ -282,7 +282,7 @@
   (funcall org-projectile:todo-files))
 
 (defun org-projectile:default-todo-files ()
-  (remove-if-not #'file-exists-p
+  (cl-remove-if-not #'file-exists-p
                  (delete-dups (cl-loop for project-name in
                                        (mapcar #'org-projectile:project-heading-from-file
                                                (projectile-relevant-known-projects))
@@ -296,6 +296,8 @@
 
 (defun org-projectile:project-location-from-name (name)
   (cdr (assoc name (org-projectile:project-name-to-location-alist))))
+
+(defvar dired-buffers)
 
 (defun org-projectile:capture-for-project (project-name &optional capture-template)
   (org-capture-set-plist (org-projectile:project-todo-entry nil capture-template))
@@ -402,6 +404,12 @@
       (when recursive
         (unless (eq point-at-start (save-excursion (org-back-to-heading) (point)))
           (org-projectile:prompt-for-subheadings))))))
+
+;; Assure the byte compiler that helm functions exist since we don't
+;; explicitly depend on helm.
+(declare-function helm "helm")
+(declare-function helm-build-sync-source "helm-source" t t)
+(declare-function helm-source-org-capture-templates "helm-org")
 
 (defun org-projectile:prompt-for-and-move-to-subheading (subheadings-to-point)
   (cond ((eq projectile-completion-system 'helm)
