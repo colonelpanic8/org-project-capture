@@ -48,7 +48,7 @@
 (defvar org-projectile:todo-files 'org-projectile:default-todo-files)
 
 ;; For a single projects file
-(defun org-projectile:project-name-to-org-file-one-file (project-name)
+(defun org-projectile:project-name-to-org-file-one-file (_project-name)
   org-projectile:projects-file)
 
 (defun org-projectile:project-name-to-location-one-file (project-name)
@@ -67,7 +67,7 @@
   (concat (org-projectile:project-location-from-name project-name)
           org-projectile:per-repo-filename))
 
-(defun org-projectile:project-name-to-location-per-repo (project-name)
+(defun org-projectile:project-name-to-location-per-repo (_project-name)
   (end-of-buffer))
 
 (defun org-projectile:per-repo ()
@@ -167,15 +167,14 @@
                           project-name project-to-org-filepath-filepath)))
     org-filepath))
 
-(defun org-projectile:prompt-for-project-name (project-name &optional project-to-org-filepath-filepath)
+(defun org-projectile:prompt-for-project-name (project-name &optional _project-to-org-filepath-filepath)
   (read-file-name (concat "org-mode file for " project-name ": ")
                   (file-name-directory org-projectile:projects-file)))
 
 (defun org-projectile:set-project-file-default (&optional project-to-org-filepath-filepath)
   (interactive)
   (let ((org-filepath (read-file-name "org-mode file: "
-                                      (file-name-directory org-projectile:projects-file)))
-        (project-to-org-filepath (org-projectile:get-project-to-org-filepath)))
+                                      (file-name-directory org-projectile:projects-file))))
     (cl-loop for project-name being the elements of (org-projectile:known-projects) do
              (org-projectile:update-project-to-org-filepath project-name
                                                             org-filepath project-to-org-filepath-filepath))
