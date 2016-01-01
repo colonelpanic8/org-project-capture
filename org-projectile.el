@@ -297,6 +297,8 @@
 (defun org-projectile:project-location-from-name (name)
   (cdr (assoc name (org-projectile:project-name-to-location-alist))))
 
+(defvar dired-buffers)
+
 (defun org-projectile:capture-for-project (project-name &optional capture-template)
   (org-capture-set-plist (org-projectile:project-todo-entry nil capture-template))
   ;; TODO: super gross that this had to be copied from org-capture,
