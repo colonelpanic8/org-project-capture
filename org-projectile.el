@@ -28,6 +28,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'org-capture)
 (require 'projectile)
 
@@ -137,7 +138,7 @@
     (when (or (not (file-exists-p org-file-truename)) (file-directory-p org-file-truename))
       (throw "The provided filepath is invalid" org-file))
     (if current-value (setcdr current-value org-file-truename)
-      (add-to-list 'project-to-org-filepath `(,project-name . ,org-file-truename)))
+      (cl-pushnew 'project-to-org-filepath `(,project-name . ,org-file-truename)))
     (org-projectile:write-project-to-org-filepath project-to-org-filepath project-to-org-filepath-filepath)))
 
 (defun org-projectile:get-project-to-org-filepath (&optional project-to-org-filepath-filepath)
