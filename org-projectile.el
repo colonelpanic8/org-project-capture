@@ -282,7 +282,7 @@
   (funcall org-projectile:todo-files))
 
 (defun org-projectile:default-todo-files ()
-  (remove-if-not #'file-exists-p
+  (cl-remove-if-not #'file-exists-p
                  (delete-dups (cl-loop for project-name in
                                        (mapcar #'org-projectile:project-heading-from-file
                                                (projectile-relevant-known-projects))
@@ -402,6 +402,12 @@
       (when recursive
         (unless (eq point-at-start (save-excursion (org-back-to-heading) (point)))
           (org-projectile:prompt-for-subheadings))))))
+
+;; Assure the byte compiler that helm functions exist since we don't
+;; explicitly depend on helm.
+(declare-function helm "helm")
+(declare-function helm-build-sync-source "helm-source" t t)
+(declare-function helm-source-org-capture-templates "helm-org")
 
 (defun org-projectile:prompt-for-and-move-to-subheading (subheadings-to-point)
   (cond ((eq projectile-completion-system 'helm)
