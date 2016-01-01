@@ -68,7 +68,7 @@
           org-projectile:per-repo-filename))
 
 (defun org-projectile:project-name-to-location-per-repo (_project-name)
-  (end-of-buffer))
+  (goto-char (point-max)))
 
 (defun org-projectile:per-repo ()
   (interactive)
@@ -263,7 +263,7 @@
 (defun org-projectile:get-link-description (heading)
   (with-temp-buffer
     (insert heading)
-    (beginning-of-buffer)
+    (goto-char (point-min))
     (if (re-search-forward org-any-link-re nil t)
         (match-string-no-properties 4) heading)))
 
