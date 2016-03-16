@@ -226,25 +226,16 @@
       (save-excursion (org-insert-subheading nil) (point-marker)))))
 
 (defun org-projectile:project-root-of-filepath (filepath)
-  ;; TODO(@IvanMalison): Replace this with projectile function if
-  ;; https://github.com/bbatsov/projectile/pull/571 is ever accepted.
-  (file-truename
-   (let ((dir (file-truename filepath)))
-     (--reduce-from
-          (or acc
-              (let* ((cache-key (format "%s-%s" it dir))
-                     (cache-value (gethash cache-key
-                                           projectile-project-root-cache)))
-                (if cache-value
-                    (if (eq cache-value 'no-project-root)
-                        nil
-                      cache-value)
-                  (let ((value (funcall it dir)))
-                    (puthash cache-key (or value 'no-project-root)
-                             projectile-project-root-cache)
-                    value))))
-          nil
-          projectile-project-root-files-functions))))
+  (filename-truename
+   (let ((dir (file-name-directory filepath)))
+     (--some (let* ((cache-key (format "%s-%s" it dir))
+                    (cache-value (gethash cache-key projectile-project-root-cache)))
+               (if cache-value
+                   cache-value
+                 (let ((value (funcall it (file-truename dir))))
+                   (puthash cache-key value projectile-project-root-cache)
+                   value)))
+             projectile-project-root-files-functions))))
 
 (defun org-projectile:project-todo-entry (&optional capture-character capture-template capture-heading)
   (unless capture-template (setq capture-template org-projectile:capture-template))
