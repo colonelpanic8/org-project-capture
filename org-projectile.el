@@ -226,7 +226,7 @@
       (save-excursion (org-insert-subheading nil) (point-marker)))))
 
 (defun org-projectile:project-root-of-filepath (filepath)
-  (filename-truename
+  (file-truename
    (let ((dir (file-name-directory filepath)))
      (--some (let* ((cache-key (format "%s-%s" it dir))
                     (cache-value (gethash cache-key projectile-project-root-cache)))
