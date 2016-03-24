@@ -457,6 +457,7 @@
 
 ;;;###autoload
 (defun org-projectile:capture-for-current-project (&optional capture-template)
+  (interactive)
   (let ((project-name (projectile-project-name)))
     (if (projectile-project-p)
         (org-projectile:capture-for-project project-name capture-template)
