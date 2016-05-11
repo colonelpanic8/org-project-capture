@@ -132,8 +132,9 @@
 
 (defun org-projectile:update-project-to-org-filepath (project-name
                                                       org-file &optional project-to-org-filepath-filepath)
-  (let* ((project-to-org-filepath (org-projectile:get-project-to-org-filepath project-to-org-filepath-filepath))
-         (org-file-truename (file-truename org-file))
+  (let* ((project-to-org-filepath (org-projectile:get-project-to-org-filepath
+                                   project-to-org-filepath-filepath))
+         (org-file-truename (org-projectile:file-truename org-file))
          (current-value (assoc project-name project-to-org-filepath)))
     (when (or (not (file-exists-p org-file-truename)) (file-directory-p org-file-truename))
       (throw "The provided filepath is invalid" org-file))
@@ -160,7 +161,8 @@
         (org-projectile:update-project-to-org-filepath project-name org-filepath)
         org-filepath))))
 
-(defun org-projectile:no-org-file-for-project (project-name &optional project-to-org-filepath-filepath)
+(defun org-projectile:no-org-file-for-project (project-name
+                                               &optional project-to-org-filepath-filepath)
   (let ((org-filepath (when org-projectile:find-org-file-for-project-function
                         (funcall org-projectile:find-org-file-for-project-function project-name))))
     (unless org-filepath
@@ -168,7 +170,8 @@
                           project-name project-to-org-filepath-filepath)))
     org-filepath))
 
-(defun org-projectile:prompt-for-project-name (project-name &optional _project-to-org-filepath-filepath)
+(defun org-projectile:prompt-for-project-name (project-name
+                                               &optional _project-to-org-filepath-filepath)
   (read-file-name (concat "org-mode file for " project-name ": ")
                   (file-name-directory org-projectile:projects-file)))
 
@@ -178,7 +181,8 @@
                                       (file-name-directory org-projectile:projects-file))))
     (cl-loop for project-name being the elements of (org-projectile:known-projects) do
              (org-projectile:update-project-to-org-filepath project-name
-                                                            org-filepath project-to-org-filepath-filepath))
+                                                            org-filepath
+                                                            project-to-org-filepath-filepath))
     org-filepath))
 
 (defun org-projectile:find-project-in-known-files (project-name)
@@ -192,7 +196,8 @@
                                          (point)))) project-name)
            return org-file))
 
-(fset 'org-projectile:project-name-to-location-prompt 'org-projectile:project-name-to-location-one-file)
+(fset 'org-projectile:project-name-to-location-prompt
+      'org-projectile:project-name-to-location-one-file)
 
 (defun org-projectile:todo-files-project-to-org-filepath ()
   (interactive)
@@ -225,14 +230,18 @@
     (when (and for-insert (not (save-excursion (org-goto-first-child))))
       (save-excursion (org-insert-subheading nil) (point-marker)))))
 
+(defun org-projectile:file-truename (filepath)
+  (when filepath
+    (file-truename filepath)))
+
 (defun org-projectile:project-root-of-filepath (filepath)
-  (file-truename
+  (org-projectile:file-truename
    (let ((dir (file-name-directory filepath)))
      (--some (let* ((cache-key (format "%s-%s" it dir))
                     (cache-value (gethash cache-key projectile-project-root-cache)))
                (if cache-value
                    cache-value
-                 (let ((value (funcall it (file-truename dir))))
+                 (let ((value (funcall it (org-projectile:file-truename dir))))
                    (puthash cache-key value projectile-project-root-cache)
                    value)))
              projectile-project-root-files-functions))))
@@ -249,8 +258,10 @@
     ,capture-template))
 
 (defun org-projectile:project-heading-from-file (filename)
-  (file-name-nondirectory
-   (directory-file-name (org-projectile:project-root-of-filepath filename))))
+  (let ((project-root (org-projectile:project-root-of-filepath filename)))
+    (when project-root
+      (file-name-nondirectory
+       (directory-file-name project-root)))))
 
 (defun org-projectile:get-link-description (heading)
   (with-temp-buffer
@@ -260,14 +271,14 @@
         (match-string-no-properties 4) heading)))
 
 (defun org-projectile:known-projects ()
-  (delete-dups `(,@(mapcar #'org-projectile:project-heading-from-file
+  (remove-if #'null (delete-dups `(,@(mapcar #'org-projectile:project-heading-from-file
                            (projectile-relevant-known-projects))
                  ,@(org-map-entries
                     (lambda () (org-projectile:get-link-description (nth 4 (org-heading-components)))) nil
                     (funcall org-projectile:todo-files)
                     (lambda ()
                       (when (< 1 (nth 1 (org-heading-components)))
-                        (point)))))))
+                        (point))))))))
 
 (defun org-projectile:todo-files ()
   (funcall org-projectile:todo-files))
