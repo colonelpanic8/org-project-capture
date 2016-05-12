@@ -6,7 +6,7 @@
 ;; Keywords: org projectile todo
 ;; URL: https://github.com/IvanMalison/org-projectile
 ;; Version: 0.2.0
-;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0"))
+;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (helm "1.9.5"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'helm-source)
 (require 'org-capture)
 (require 'projectile)
 
