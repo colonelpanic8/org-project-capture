@@ -6,7 +6,7 @@
 ;; Keywords: org projectile todo
 ;; URL: https://github.com/IvanMalison/org-projectile
 ;; Version: 0.2.0
-;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (helm "1.9.5"))
+;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -29,7 +29,6 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'helm-source)
 (require 'org-capture)
 (require 'projectile)
 
@@ -408,20 +407,25 @@
         (unless (eq point-at-start (save-excursion (org-back-to-heading) (point)))
           (org-projectile:prompt-for-subheadings))))))
 
-;; Assure the byte compiler that helm functions exist since we don't
-;; explicitly depend on helm.
-(declare-function helm "helm")
-(declare-function helm-build-sync-source "helm-source" t t)
-(declare-function helm-source-org-capture-templates "helm-org")
+;; Only define the following functions if helm is installed
+(when (require 'helm-source nil 'noerror)
+  (defun org-projectile:prompt-for-and-move-to-subheading (subheadings-to-point)
+    (cond ((eq projectile-completion-system 'helm)
+	   (let ((selection (helm :sources (org-projectile:helm-subheadings-source subheadings-to-point))))
+	     (goto-char selection)))))
+  (defun org-projectile:helm-subheadings-source (subheadings-to-point)
+    (helm-build-sync-source "Choose a subheading:"
+			    :candidates subheadings-to-point))
+  (defun org-projectile:helm-source (&optional capture-template)
+  (helm-build-sync-source "Org Capture Options:"
+    :candidates (cl-loop for project in (org-projectile:known-projects)
+                         collect `(,project . ,project))
+    :action `(("Do capture" .
+               ,(lambda (project)
+                  (org-projectile:capture-for-project project capture-template)))))))
 
-(defun org-projectile:prompt-for-and-move-to-subheading (subheadings-to-point)
-  (cond ((eq projectile-completion-system 'helm)
-         (let ((selection (helm :sources (org-projectile:helm-subheadings-source subheadings-to-point))))
-           (goto-char selection)))))
 
-(defun org-projectile:helm-subheadings-source (subheadings-to-point)
-  (helm-build-sync-source "Choose a subheading:"
-    :candidates subheadings-to-point))
+
 
 (defun org-projectile:get-subheadings (&optional scope)
   (interactive)
@@ -432,14 +436,6 @@
                      (lambda () (when (and (nth 2 (org-heading-components))
                                            (not (org-entry-get nil "ORG-PROJECTILE-SUBHEADINGS")))
                                   (org-end-of-subtree))))))
-
-(defun org-projectile:helm-source (&optional capture-template)
-  (helm-build-sync-source "Org Capture Options:"
-    :candidates (cl-loop for project in (org-projectile:known-projects)
-                         collect `(,project . ,project))
-    :action `(("Do capture" .
-               ,(lambda (project)
-                  (org-projectile:capture-for-project project capture-template))))))
 
 ;;;###autoload
 (defun org-projectile:toggle-subheading ()
@@ -452,12 +448,14 @@
 ;;;###autoload
 (defun org-projectile:template-or-project (&optional arg)
   (interactive "P")
-  (helm :sources
-        (list (helm-source-org-capture-templates)
-              (org-projectile:helm-source
-               (if arg org-projectile:linked-capture-template nil)))
-        :candidate-number-limit 99999
-        :buffer "*helm org capture templates*"))
+  (if (require 'helm-org nil 'noerror)
+      (helm :sources
+	    (list (helm-source-org-capture-templates)
+		  (org-projectile:helm-source
+		   (if arg org-projectile:linked-capture-template nil)))
+	    :candidate-number-limit 99999
+	    :buffer "*helm org capture templates*")
+    (user-error "%s" "This command is only available to helm users. Install helm and try again.")))
 
 ;;;###autoload
 (defun org-projectile:project-todo-completing-read (&optional capture-template)
