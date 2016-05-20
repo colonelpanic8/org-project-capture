@@ -264,8 +264,11 @@
                    value)))
              projectile-project-root-files-functions))))
 
-(defun org-projectile:project-todo-entry (&optional capture-character capture-template capture-heading)
-  (unless capture-template (setq capture-template org-projectile:capture-template))
+(defun org-projectile:project-todo-entry
+    (&optional capture-character capture-template capture-heading
+               &rest additional-options)
+  (unless capture-template (setq capturex-template
+                                 org-projectile:capture-template))
   (unless capture-character (setq capture-character "p"))
   (unless capture-heading (setq capture-heading "Project Todo"))
   `(,capture-character ,capture-heading entry
@@ -273,7 +276,7 @@
                         (lambda () (org-projectile:location-for-project
                                     (org-projectile:project-heading-from-file
                                      (org-capture-get :original-file)))))
-    ,capture-template))
+    ,capture-template) ,@additional-options)
 
 (defun org-projectile:project-heading-from-file (filename)
   (let ((project-root (org-projectile:project-root-of-filepath filename)))
