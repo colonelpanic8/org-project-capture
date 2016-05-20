@@ -60,8 +60,10 @@
 (defun org-projectile:one-file ()
   (interactive)
   (setq org-projectile:todo-files 'org-projectile:default-todo-files)
-  (setq org-projectile:project-name-to-org-file 'org-projectile:project-name-to-org-file-one-file)
-  (setq org-projectile:project-name-to-location 'org-projectile:project-name-to-location-one-file))
+  (setq org-projectile:project-name-to-org-file
+        'org-projectile:project-name-to-org-file-one-file)
+  (setq org-projectile:project-name-to-location
+        'org-projectile:project-name-to-location-one-file))
 
 ;; For repo files in the projectile project path
 (defun org-projectile:project-name-to-org-file-per-repo (project-name)
@@ -74,8 +76,10 @@
 (defun org-projectile:per-repo ()
   (interactive)
   (setq org-projectile:todo-files 'org-projectile:default-todo-files)
-  (setq org-projectile:project-name-to-org-file 'org-projectile:project-name-to-org-file-per-repo)
-  (setq org-projectile:project-name-to-location 'org-projectile:project-name-to-location-per-repo))
+  (setq org-projectile:project-name-to-org-file
+        'org-projectile:project-name-to-org-file-per-repo)
+  (setq org-projectile:project-name-to-location
+        'org-projectile:project-name-to-location-per-repo))
 
 ;; Hybrid of the two approaches mentioned above
 (defvar org-projectile:project-to-approach nil)
@@ -104,8 +108,10 @@
 (defun org-projectile:hybrid ()
   (interactive)
   (setq org-projectile:todo-files 'org-projectile:default-todo-files)
-  (setq org-projectile:project-name-to-org-file 'org-projectile:project-name-to-org-file-hybrid)
-  (setq org-projectile:project-name-to-location 'org-projectile:project-name-to-location-hybrid))
+  (setq org-projectile:project-name-to-org-file
+        'org-projectile:project-name-to-org-file-hybrid)
+  (setq org-projectile:project-name-to-location
+        'org-projectile:project-name-to-location-hybrid))
 
 ;; Prompt for org file location on a per project basis
 (defvar org-projectile:find-org-file-for-project-function nil)
@@ -117,21 +123,23 @@
 (defun org-projectile:write-project-to-org-filepath (project-to-org-filepath
                                                      &optional project-to-org-filepath-filepath)
   (unless project-to-org-filepath-filepath
-    (setq project-to-org-filepath-filepath org-projectile:project-to-org-filepath-filepath))
+    (setq project-to-org-filepath-filepath
+          org-projectile:project-to-org-filepath-filepath))
   (with-temp-buffer
     (insert (prin1-to-string project-to-org-filepath))
     (write-region (point-min) (point-max) project-to-org-filepath-filepath nil)))
 
 (defun org-projectile:read-project-to-org-filepath (&optional project-to-org-filepath-filepath)
   (unless project-to-org-filepath-filepath
-    (setq project-to-org-filepath-filepath org-projectile:project-to-org-filepath-filepath))
+    (setq project-to-org-filepath-filepath
+          org-projectile:project-to-org-filepath-filepath))
   (when (file-exists-p project-to-org-filepath-filepath)
     (with-temp-buffer
       (insert-file-contents project-to-org-filepath-filepath)
       (read (buffer-string)))))
 
-(defun org-projectile:update-project-to-org-filepath (project-name
-                                                      org-file &optional project-to-org-filepath-filepath)
+(defun org-projectile:update-project-to-org-filepath
+    (project-name org-file &optional project-to-org-filepath-filepath)
   (let* ((project-to-org-filepath (org-projectile:get-project-to-org-filepath
                                    project-to-org-filepath-filepath))
          (org-file-truename (org-projectile:file-truename org-file))
@@ -140,60 +148,67 @@
       (throw "The provided filepath is invalid" org-file))
     (if current-value (setcdr current-value org-file-truename)
       (cl-pushnew 'project-to-org-filepath `(,project-name . ,org-file-truename)))
-    (org-projectile:write-project-to-org-filepath project-to-org-filepath project-to-org-filepath-filepath)))
+    (org-projectile:write-project-to-org-filepath
+     project-to-org-filepath project-to-org-filepath-filepath)))
 
-(defun org-projectile:get-project-to-org-filepath (&optional project-to-org-filepath-filepath)
+(defun org-projectile:get-project-to-org-filepath
+    (&optional project-to-org-filepath-filepath)
   (if org-projectile:keep-project-to-org-filepath-in-memory
       (if (eq org-projectile:project-to-org-filepath 'not-yet-read)
           (progn
             (setq org-projectile:project-to-org-filepath
-                  (org-projectile:read-project-to-org-filepath project-to-org-filepath-filepath)))
+                  (org-projectile:read-project-to-org-filepath
+                   project-to-org-filepath-filepath)))
         org-projectile:project-to-org-filepath)
-    (org-projectile:read-project-to-org-filepath project-to-org-filepath-filepath)))
+    (org-projectile:read-project-to-org-filepath
+     project-to-org-filepath-filepath)))
 
-(defun org-projectile:project-name-to-org-file-prompt (project-name &optional project-to-org-filepath-filepath)
+(defun org-projectile:project-name-to-org-file-prompt
+    (project-name &optional project-to-org-filepath-filepath)
   (let ((current (assoc project-name (org-projectile:get-project-to-org-filepath))))
     (if current (cdr current)
       (let ((org-filepath (org-projectile:find-project-in-known-files project-name)))
         (unless org-filepath
-          (setq org-filepath (org-projectile:no-org-file-for-project project-name
-                                                                     project-to-org-filepath-filepath)))
-        (org-projectile:update-project-to-org-filepath project-name org-filepath)
-        org-filepath))))
+          (setq org-filepath
+                (org-projectile:no-org-file-for-project project-name
+                                                        project-to-org-filepath-filepath)))
+        (org-projectile:update-project-to-org-filepath project-name org-filepath) org-filepath))))
 
-(defun org-projectile:no-org-file-for-project (project-name
-                                               &optional project-to-org-filepath-filepath)
+(defun org-projectile:no-org-file-for-project
+    (project-name &optional project-to-org-filepath-filepath)
   (let ((org-filepath (when org-projectile:find-org-file-for-project-function
-                        (funcall org-projectile:find-org-file-for-project-function project-name))))
+                        (funcall
+                         org-projectile:find-org-file-for-project-function
+                         project-name))))
     (unless org-filepath
       (setq org-filepath (org-projectile:prompt-for-project-name
                           project-name project-to-org-filepath-filepath)))
     org-filepath))
 
-(defun org-projectile:prompt-for-project-name (project-name
-                                               &optional _project-to-org-filepath-filepath)
+(defun org-projectile:prompt-for-project-name
+    (project-name &optional _project-to-org-filepath-filepath)
   (read-file-name (concat "org-mode file for " project-name ": ")
                   (file-name-directory org-projectile:projects-file)))
 
 (defun org-projectile:set-project-file-default (&optional project-to-org-filepath-filepath)
   (interactive)
-  (let ((org-filepath (read-file-name "org-mode file: "
-                                      (file-name-directory org-projectile:projects-file))))
+  (let ((org-filepath
+         (read-file-name "org-mode file: "
+                         (file-name-directory org-projectile:projects-file))))
     (cl-loop for project-name being the elements of (org-projectile:known-projects) do
-             (org-projectile:update-project-to-org-filepath project-name
-                                                            org-filepath
-                                                            project-to-org-filepath-filepath))
+             (org-projectile:update-project-to-org-filepath
+              project-name org-filepath project-to-org-filepath-filepath))
     org-filepath))
 
 (defun org-projectile:find-project-in-known-files (project-name)
   (cl-loop for org-file in (funcall org-projectile:todo-files) when
-           (-contains-p (org-map-entries
-                         (lambda () (org-projectile:get-link-description
-                                     (nth 4 (org-heading-components)))) nil
-                                     (list org-file)
-                                     (lambda ()
-                                       (when (< 1 (nth 1 (org-heading-components)))
-                                         (point)))) project-name)
+           (-contains-p
+            (org-map-entries (lambda () (org-projectile:get-link-description
+                                         (nth 4 (org-heading-components)))) nil
+                                         (list org-file)
+                                         (lambda ()
+                                           (when (< 1 (nth 1 (org-heading-components)))
+                                             (point)))) project-name)
            return org-file))
 
 (fset 'org-projectile:project-name-to-location-prompt
@@ -206,15 +221,18 @@
 
 (defun org-projectile:set-org-file-for-project ()
   (interactive)
-  (org-projectile:prompt-for-project-name (projectile-completing-read
-                                           "Select project for which to set org file: "
-                                           (org-projectile:known-projects))))
+  (org-projectile:prompt-for-project-name
+   (projectile-completing-read "Select project for which to set org file: "
+                               (org-projectile:known-projects))))
 
 (defun org-projectile:prompt ()
   (interactive)
-  (setq org-projectile:todo-files 'org-projectile:todo-files-project-to-org-filepath)
-  (setq org-projectile:project-name-to-org-file 'org-projectile:project-name-to-org-file-prompt)
-  (setq org-projectile:project-name-to-location 'org-projectile:project-name-to-location-prompt))
+  (setq org-projectile:todo-files
+        'org-projectile:todo-files-project-to-org-filepath)
+  (setq org-projectile:project-name-to-org-file
+        'org-projectile:project-name-to-org-file-prompt)
+  (setq org-projectile:project-name-to-location
+        'org-projectile:project-name-to-location-prompt))
 
 (defun org-projectile:location-for-project (project-name &optional for-insert)
   (let* ((filename (funcall org-projectile:project-name-to-org-file project-name)))
@@ -274,7 +292,8 @@
   (remove-if #'null (delete-dups `(,@(mapcar #'org-projectile:project-heading-from-file
                            (projectile-relevant-known-projects))
                  ,@(org-map-entries
-                    (lambda () (org-projectile:get-link-description (nth 4 (org-heading-components)))) nil
+                    (lambda () (org-projectile:get-link-description
+                                (nth 4 (org-heading-components)))) nil
                     (funcall org-projectile:todo-files)
                     (lambda ()
                       (when (< 1 (nth 1 (org-heading-components)))
@@ -340,7 +359,8 @@
     (org-capture-put :target-entry-p t)
     (org-capture-place-template)
     (when org-projectile:subheading-cleanup-marker
-      (org-projectile:cleanup-subheading org-projectile:subheading-cleanup-marker))))
+      (org-projectile:cleanup-subheading
+       org-projectile:subheading-cleanup-marker))))
 
 (defun org-projectile:cleanup-subheading (marker)
   (with-current-buffer (marker-buffer marker)
@@ -362,13 +382,15 @@
   (let ((linked-heading (org-projectile:linked-heading heading)))
     (if (re-search-forward
          (format org-complex-heading-regexp-format
-                 (format "%s\\|%s" (regexp-quote linked-heading) (regexp-quote heading)))
+                 (format "%s\\|%s" (regexp-quote linked-heading)
+                         (regexp-quote heading)))
          nil t)
         (progn
           (goto-char (point-at-bol))
           (when (and org-projectile:force-linked
                      (looking-at
-                      (format org-complex-heading-regexp-format (regexp-quote heading))))
+                      (format org-complex-heading-regexp-format
+                              (regexp-quote heading))))
             (re-search-forward heading)
             (org-show-subtree)
             (delete-char (* (length heading) -1))
@@ -382,7 +404,8 @@
     (nth 4 (org-heading-components))))
 
 (defun org-projectile:linked-heading (heading)
-  (org-make-link-string (format "elisp:(org-projectile:open-project \"%s\")" heading) heading))
+  (org-make-link-string
+   (format "elisp:(org-projectile:open-project \"%s\")" heading) heading))
 
 (defun org-projectile:project-heading (heading)
   (let ((heading-text (org-projectile:insert-or-goto-heading heading)))
@@ -395,7 +418,8 @@
   (interactive)
   (let ((end-of-heading (save-excursion (outline-next-heading) (point)))
         (last-match t))
-    (while last-match (setq last-match (re-search-forward ":END:" end-of-heading t)))
+    (while last-match (setq last-match
+                            (re-search-forward ":END:" end-of-heading t)))
     (point)))
 
 (defun org-projectile:prompt-for-subheadings (&optional recursive)
@@ -424,7 +448,12 @@
                ,(lambda (project)
                   (org-projectile:capture-for-project project capture-template)))))))
 
-
+(defun org-projectile:prompt-for-and-move-to-subheading (subheadings-to-point)
+  (cond ((eq projectile-completion-system 'helm)
+         (let ((selection (helm :sources
+                                (org-projectile:helm-subheadings-source
+                                 subheadings-to-point))))
+           (goto-char selection)))))
 
 
 (defun org-projectile:get-subheadings (&optional scope)
