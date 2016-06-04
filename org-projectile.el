@@ -451,13 +451,6 @@
                ,(lambda (project)
                   (org-projectile:capture-for-project project capture-template)))))))
 
-(defun org-projectile:prompt-for-and-move-to-subheading (subheadings-to-point)
-  (cond ((eq projectile-completion-system 'helm)
-         (let ((selection (helm :sources
-                                (org-projectile:helm-subheadings-source
-                                 subheadings-to-point))))
-           (goto-char selection)))))
-
 
 (defun org-projectile:get-subheadings (&optional scope)
   (interactive)
