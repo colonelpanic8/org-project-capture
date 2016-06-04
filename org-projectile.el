@@ -267,7 +267,7 @@
 (defun org-projectile:project-todo-entry
     (&optional capture-character capture-template capture-heading
                &rest additional-options)
-  (unless capture-template (setq capturex-template
+  (unless capture-template (setq capture-template
                                  org-projectile:capture-template))
   (unless capture-character (setq capture-character "p"))
   (unless capture-heading (setq capture-heading "Project Todo"))
