@@ -438,19 +438,19 @@
 (when (require 'helm-source nil 'noerror)
   (defun org-projectile:prompt-for-and-move-to-subheading (subheadings-to-point)
     (cond ((eq projectile-completion-system 'helm)
-	   (let ((selection (helm :sources (org-projectile:helm-subheadings-source subheadings-to-point))))
-	     (goto-char selection)))))
+           (let ((selection
+                  (helm :sources (org-projectile:helm-subheadings-source subheadings-to-point))))
+             (goto-char selection)))))
   (defun org-projectile:helm-subheadings-source (subheadings-to-point)
     (helm-build-sync-source "Choose a subheading:"
-			    :candidates subheadings-to-point))
+      :candidates subheadings-to-point))
   (defun org-projectile:helm-source (&optional capture-template)
-  (helm-build-sync-source "Org Capture Options:"
-    :candidates (cl-loop for project in (org-projectile:known-projects)
-                         collect `(,project . ,project))
-    :action `(("Do capture" .
-               ,(lambda (project)
-                  (org-projectile:capture-for-project project capture-template)))))))
-
+    (helm-build-sync-source "Org Capture Options:"
+      :candidates (cl-loop for project in (org-projectile:known-projects)
+                           collect `(,project . ,project))
+      :action `(("Do capture" .
+                 ,(lambda (project)
+                    (org-projectile:capture-for-project project capture-template)))))))
 
 (defun org-projectile:get-subheadings (&optional scope)
   (interactive)
