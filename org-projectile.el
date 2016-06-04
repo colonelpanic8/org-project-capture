@@ -276,7 +276,7 @@
                         (lambda () (org-projectile:location-for-project
                                     (org-projectile:project-heading-from-file
                                      (org-capture-get :original-file)))))
-    ,capture-template) ,@additional-options)
+    ,capture-template ,@additional-options))
 
 (defun org-projectile:project-heading-from-file (filename)
   (let ((project-root (org-projectile:project-root-of-filepath filename)))
