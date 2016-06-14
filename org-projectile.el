@@ -58,6 +58,7 @@
     (org-projectile:prompt-for-subheadings 'tree)))
 
 (defun org-projectile:one-file ()
+  "Use org-projectile in one-file mode."
   (interactive)
   (setq org-projectile:todo-files 'org-projectile:default-todo-files)
   (setq org-projectile:project-name-to-org-file
@@ -74,6 +75,7 @@
   (goto-char (point-max)))
 
 (defun org-projectile:per-repo ()
+  "Use org-projectile in per-repo mode."
   (interactive)
   (setq org-projectile:todo-files 'org-projectile:default-todo-files)
   (setq org-projectile:project-name-to-org-file
@@ -106,6 +108,7 @@
       (org-projectile:project-name-to-location-per-repo project-name)))))
 
 (defun org-projectile:hybrid ()
+  "Use org-projectile in hybrid mode."
   (interactive)
   (setq org-projectile:todo-files 'org-projectile:default-todo-files)
   (setq org-projectile:project-name-to-org-file
@@ -120,8 +123,8 @@
 (defvar org-projectile:project-to-org-filepath-filepath
   (concat (file-name-as-directory user-emacs-directory) "project-to-org-filepath"))
 
-(defun org-projectile:write-project-to-org-filepath (project-to-org-filepath
-                                                     &optional project-to-org-filepath-filepath)
+(defun org-projectile:write-project-to-org-filepath
+    (project-to-org-filepath &optional project-to-org-filepath-filepath)
   (unless project-to-org-filepath-filepath
     (setq project-to-org-filepath-filepath
           org-projectile:project-to-org-filepath-filepath))
@@ -129,7 +132,8 @@
     (insert (prin1-to-string project-to-org-filepath))
     (write-region (point-min) (point-max) project-to-org-filepath-filepath nil)))
 
-(defun org-projectile:read-project-to-org-filepath (&optional project-to-org-filepath-filepath)
+(defun org-projectile:read-project-to-org-filepath
+    (&optional project-to-org-filepath-filepath)
   (unless project-to-org-filepath-filepath
     (setq project-to-org-filepath-filepath
           org-projectile:project-to-org-filepath-filepath))
@@ -191,13 +195,17 @@
                   (file-name-directory org-projectile:projects-file)))
 
 (defun org-projectile:set-project-file-default (&optional project-to-org-filepath-filepath)
+  "Set the filepath for any known projects that do not have a filepath.
+
+If PROJECT-TO-ORG-FILEPATH-FILEPATH is provided use that as the
+location of the filepath cache."
   (interactive)
   (let ((org-filepath
          (read-file-name "org-mode file: "
                          (file-name-directory org-projectile:projects-file))))
-    (cl-loop for project-name being the elements of (org-projectile:known-projects) do
-             (org-projectile:update-project-to-org-filepath
-              project-name org-filepath project-to-org-filepath-filepath))
+    (cl-loop for project-name being the elements of (org-projectile:known-projects)
+             do (org-projectile:update-project-to-org-filepath
+                 project-name org-filepath project-to-org-filepath-filepath))
     org-filepath))
 
 (defun org-projectile:find-project-in-known-files (project-name)
@@ -215,17 +223,21 @@
       'org-projectile:project-name-to-location-one-file)
 
 (defun org-projectile:todo-files-project-to-org-filepath ()
-  (interactive)
-  (delete-dups (cl-loop for elem in (org-projectile:get-project-to-org-filepath) collect
-                        (cdr elem))))
+  (delete-dups
+   (cl-loop for elem in (org-projectile:get-project-to-org-filepath)
+            collect (cdr elem))))
 
 (defun org-projectile:set-org-file-for-project ()
+  "Set the org file to use for a projectile project."
   (interactive)
-  (org-projectile:prompt-for-project-name
-   (projectile-completing-read "Select project for which to set org file: "
-                               (org-projectile:known-projects))))
+  (org-projectile:update-project-to-org-filepath
+   (org-projectile:prompt-for-project-name
+    (projectile-completing-read "Select project for which to set org file: "
+                                (org-projectile:known-projects)))
+   (read-file-name "Select an org file: ")))
 
 (defun org-projectile:prompt ()
+  "Use the prompt mode of org-projectile."
   (interactive)
   (setq org-projectile:todo-files
         'org-projectile:todo-files-project-to-org-filepath)
@@ -418,7 +430,6 @@
     heading-text))
 
 (defun org-projectile:end-of-properties ()
-  (interactive)
   (let ((end-of-heading (save-excursion (outline-next-heading) (point)))
         (last-match t))
     (while last-match (setq last-match
@@ -439,7 +450,8 @@
   (defun org-projectile:prompt-for-and-move-to-subheading (subheadings-to-point)
     (cond ((eq projectile-completion-system 'helm)
            (let ((selection
-                  (helm :sources (org-projectile:helm-subheadings-source subheadings-to-point))))
+                  (helm :sources (org-projectile:helm-subheadings-source
+                                  subheadings-to-point))))
              (goto-char selection)))))
   (defun org-projectile:helm-subheadings-source (subheadings-to-point)
     (helm-build-sync-source "Choose a subheading:"
@@ -450,10 +462,10 @@
                            collect `(,project . ,project))
       :action `(("Do capture" .
                  ,(lambda (project)
-                    (org-projectile:capture-for-project project capture-template)))))))
+                    (org-projectile:capture-for-project
+                     project capture-template)))))))
 
 (defun org-projectile:get-subheadings (&optional scope)
-  (interactive)
   (unless scope (setq scope 'tree))
   (org-show-subtree)
   (save-excursion
@@ -464,6 +476,10 @@
 
 ;;;###autoload
 (defun org-projectile:toggle-subheading ()
+  "Toggle subheading setting for heading at point.
+
+When a heading is considered a subheading it will appear in
+org-projectile search commands."
   (interactive)
   (let ((was-enabled (org-entry-get nil "ORG-PROJECTILE-SUBHEADINGS")))
     (if was-enabled
@@ -472,6 +488,10 @@
 
 ;;;###autoload
 (defun org-projectile:template-or-project (&optional arg)
+  "Select a project or org capture template and record a TODO.
+
+If ARG is provided use `org-projectile:linked-capture-template'
+as the capture template."
   (interactive "P")
   (if (require 'helm-org nil 'noerror)
       (helm :sources
@@ -484,6 +504,9 @@
 
 ;;;###autoload
 (defun org-projectile:project-todo-completing-read (&optional capture-template)
+  "Select a project using a `projectile-completing-read' and record a TODO.
+
+If CAPTURE-TEMPLATE is provided use it as the capture template for the TODO."
   (interactive)
   (org-projectile:capture-for-project
    (projectile-completing-read "Record TODO for project: "
@@ -492,6 +515,9 @@
 
 ;;;###autoload
 (defun org-projectile:capture-for-current-project (&optional capture-template)
+  "Capture a TODO for the current active projectile project.
+
+If CAPTURE-TEMPLATE is provided use it as the capture template for the TODO."
   (interactive)
   (let ((project-name (projectile-project-name)))
     (if (projectile-project-p)
