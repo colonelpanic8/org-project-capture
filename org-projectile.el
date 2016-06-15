@@ -263,7 +263,7 @@ location of the filepath cache."
   ;; selected entry. We return a marker where the dummy subheading
   ;; was created so that it can be deleted later.
   (when (and for-insert (not (save-excursion (org-goto-first-child))))
-    (save-excursion (org-insert-subheading nil) (point-marker)))))
+    (save-excursion (org-insert-subheading nil) (point-marker))))
 
 (defun org-projectile:file-truename (filepath)
   (when filepath
