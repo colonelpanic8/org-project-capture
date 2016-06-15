@@ -5,7 +5,7 @@
 ;; Author: Ivan Malison <IvanMalison@gmail.com>
 ;; Keywords: org projectile todo
 ;; URL: https://github.com/IvanMalison/org-projectile
-;; Version: 0.2.0
+;; Version: 0.2.1
 ;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "24"))
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -55,7 +55,8 @@
 (defun org-projectile:project-name-to-location-one-file (project-name)
   (org-projectile:project-heading project-name)
   (when org-projectile:subheading-selection
-    (org-projectile:prompt-for-subheadings 'tree)))
+    (org-projectile:prompt-for-subheadings 'tree))
+  t)
 
 (defun org-projectile:one-file ()
   "Use org-projectile in one-file mode."
