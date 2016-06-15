@@ -72,7 +72,8 @@
           org-projectile:per-repo-filename))
 
 (defun org-projectile:project-name-to-location-per-repo (_project-name)
-  (goto-char (point-max)))
+  (goto-char (point-max))
+  nil)
 
 (defun org-projectile:per-repo ()
   "Use org-projectile in per-repo mode."
@@ -89,11 +90,11 @@
 
 (defun org-projectile:get-approach-for-project (project-name)
   (or (cdr (assoc project-name org-projectile:project-to-approach))
-                      org-projectile:default-approach))
+      org-projectile:default-approach))
 
 (defun org-projectile:project-name-to-org-file-hybrid (project-name)
   (let ((approach (org-projectile:get-approach-for-project project-name)))
-    (cond
+     (cond
      ((equal approach 'one-file)
       (org-projectile:project-name-to-org-file-one-file project-name))
      ((equal approach 'per-repo)
@@ -194,7 +195,8 @@
   (read-file-name (concat "org-mode file for " project-name ": ")
                   (file-name-directory org-projectile:projects-file)))
 
-(defun org-projectile:set-project-file-default (&optional project-to-org-filepath-filepath)
+(defun org-projectile:set-project-file-default
+    (&optional project-to-org-filepath-filepath)
   "Set the filepath for any known projects that do not have a filepath.
 
 If PROJECT-TO-ORG-FILEPATH-FILEPATH is provided use that as the
@@ -211,12 +213,13 @@ location of the filepath cache."
 (defun org-projectile:find-project-in-known-files (project-name)
   (cl-loop for org-file in (funcall org-projectile:todo-files) when
            (-contains-p
-            (org-map-entries (lambda () (org-projectile:get-link-description
-                                         (nth 4 (org-heading-components)))) nil
-                                         (list org-file)
-                                         (lambda ()
-                                           (when (< 1 (nth 1 (org-heading-components)))
-                                             (point)))) project-name)
+            (org-map-entries (lambda ()
+                               (org-projectile:get-link-description
+                                (nth 4 (org-heading-components)))) nil
+                                (list org-file)
+                                (lambda ()
+                                  (when (< 1 (nth 1 (org-heading-components)))
+                                    (point)))) project-name)
            return org-file))
 
 (fset 'org-projectile:project-name-to-location-prompt
@@ -249,16 +252,18 @@ location of the filepath cache."
 (defun org-projectile:location-for-project (project-name &optional for-insert)
   (let* ((filename (funcall org-projectile:project-name-to-org-file project-name)))
     (switch-to-buffer (find-file-noselect filename))
-    (funcall org-projectile:project-name-to-location project-name)
-    (org-end-of-line)
-    (org-projectile:end-of-properties)
-    ;; It sucks that this has to be done, but we have to insert a
-    ;; subheading if the entry does not have one in order to convince
-    ;; capture to actually insert the template as a subtree of the
-    ;; selected entry. We return a marker where the dummy subheading
-    ;; was created so that it can be deleted later.
-    (when (and for-insert (not (save-excursion (org-goto-first-child))))
-      (save-excursion (org-insert-subheading nil) (point-marker)))))
+    (funcall org-projectile:project-name-to-location project-name)))
+
+(defun org-projectile:target-subheading-and-return-marker ()
+  (org-end-of-line)
+  (org-projectile:end-of-properties)
+  ;; It sucks that this has to be done, but we have to insert a
+  ;; subheading if the entry does not have one in order to convince
+  ;; capture to actually insert the template as a subtree of the
+  ;; selected entry. We return a marker where the dummy subheading
+  ;; was created so that it can be deleted later.
+  (when (and for-insert (not (save-excursion (org-goto-first-child))))
+    (save-excursion (org-insert-subheading nil) (point-marker)))))
 
 (defun org-projectile:file-truename (filepath)
   (when filepath
@@ -268,7 +273,8 @@ location of the filepath cache."
   (org-projectile:file-truename
    (let ((dir (file-name-directory filepath)))
      (--some (let* ((cache-key (format "%s-%s" it dir))
-                    (cache-value (gethash cache-key projectile-project-root-cache)))
+                    (cache-value (gethash
+                                  cache-key projectile-project-root-cache)))
                (if cache-value
                    cache-value
                  (let ((value (funcall it (org-projectile:file-truename dir))))
@@ -304,31 +310,37 @@ location of the filepath cache."
         (match-string-no-properties 4) heading)))
 
 (defun org-projectile:known-projects ()
-  (remove-if #'null (delete-dups `(,@(mapcar #'org-projectile:project-heading-from-file
-                           (projectile-relevant-known-projects))
-                 ,@(org-map-entries
-                    (lambda () (org-projectile:get-link-description
-                                (nth 4 (org-heading-components)))) nil
-                    (funcall org-projectile:todo-files)
-                    (lambda ()
-                      (when (< 1 (nth 1 (org-heading-components)))
-                        (point))))))))
+  (remove-if
+   #'null
+   (delete-dups
+    `(,@(mapcar #'org-projectile:project-heading-from-file
+                (projectile-relevant-known-projects))
+      ,@(org-map-entries
+         (lambda () (org-projectile:get-link-description
+                     (nth 4 (org-heading-components)))) nil
+                     (funcall org-projectile:todo-files)
+                     (lambda ()
+                       (when (< 1 (nth 1 (org-heading-components)))
+                         (point))))))))
 
 (defun org-projectile:todo-files ()
   (funcall org-projectile:todo-files))
 
 (defun org-projectile:default-todo-files ()
-  (cl-remove-if-not #'file-exists-p
-                 (delete-dups (cl-loop for project-name in
-                                       (mapcar #'org-projectile:project-heading-from-file
-                                               (projectile-relevant-known-projects))
-                        collect (funcall org-projectile:project-name-to-org-file
-                                         project-name)))))
+  (cl-remove-if-not
+   #'file-exists-p
+   (delete-dups
+    (cl-loop for project-name in
+             (mapcar #'org-projectile:project-heading-from-file
+                     (projectile-relevant-known-projects))
+             collect (funcall org-projectile:project-name-to-org-file
+                              project-name)))))
 
 (defun org-projectile:project-name-to-location-alist ()
   (cl-loop for project-location in projectile-known-projects
-           collect `(,(file-name-nondirectory (directory-file-name project-location)) .
-                     ,project-location)))
+           collect `(,(file-name-nondirectory
+                       (directory-file-name project-location)) .
+                       ,project-location)))
 
 (defun org-projectile:project-location-from-name (name)
   (cdr (assoc name (org-projectile:project-name-to-location-alist))))
@@ -346,7 +358,8 @@ location of the filepath cache."
                              org-capture-link-is-already-stored)
                         (plist-get org-store-link-plist :annotation)
                       (ignore-errors (org-store-link nil))))
-        org-projectile:subheading-cleanup-marker)
+        org-projectile:subheading-cleanup-marker
+        org-projectile:do-target-entry)
     (org-capture-put :original-buffer orig-buf
                      :original-file (or (buffer-file-name orig-buf)
                                         (and (featurep 'dired)
@@ -363,7 +376,7 @@ location of the filepath cache."
                          (org-current-time)))
     (org-capture-put :template (org-capture-fill-template capture-template))
     (org-capture-set-target-location
-     `(function ,(lambda () (setq org-projectile:subheading-cleanup-marker
+     `(function ,(lambda () (setq org-projectile:do-target-entry
                                   (org-projectile:location-for-project project-name t)))))
     ;; Apparently this needs to be forced because (org-at-heading-p)
     ;; will not be true and so `org-capture-set-target-location` will
@@ -371,7 +384,10 @@ location of the filepath cache."
     ;; TODO(@IvanMalison): Perhaps there is a better way to do this?
     ;; Maybe something that would allow us to get rid of the horrible
     ;; subheading-cleanup-marker hack?
-    (org-capture-put :target-entry-p t)
+    (org-capture-put :target-entry-p org-projectile:do-target-entry)
+    (when org-projectile:do-target-entry
+      (setq org-projectile:subheading-cleanup-marker
+            (org-projectile:target-subheading-and-return-marker)))
     (org-capture-place-template)
     (when org-projectile:subheading-cleanup-marker
       (org-projectile:cleanup-subheading
