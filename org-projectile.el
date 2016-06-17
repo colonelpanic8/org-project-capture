@@ -348,8 +348,11 @@ location of the filepath cache."
 
 (defvar dired-buffers)
 
-(defun org-projectile:capture-for-project (project-name &optional capture-template)
-  (org-capture-set-plist (org-projectile:project-todo-entry nil capture-template))
+(defun org-projectile:capture-for-project
+    (project-name &optional capture-template &rest additional-options)
+  (org-capture-set-plist
+   (apply #'org-projectile:project-todo-entry
+          nil capture-template nil additional-options))
   ;; TODO: super gross that this had to be copied from org-capture,
   ;; Unfortunately, it does not seem to be possible to call into org-capture
   ;; because it makes assumptions that make it impossible to set things up
@@ -522,25 +525,29 @@ as the capture template."
     (user-error "%s" "This command is only available to helm users. Install helm and try again.")))
 
 ;;;###autoload
-(defun org-projectile:project-todo-completing-read (&optional capture-template)
+(defun org-projectile:project-todo-completing-read
+    (&optional capture-template &rest additional-options)
   "Select a project using a `projectile-completing-read' and record a TODO.
 
 If CAPTURE-TEMPLATE is provided use it as the capture template for the TODO."
   (interactive)
-  (org-projectile:capture-for-project
+  (apply
+   #'org-projectile:capture-for-project
    (projectile-completing-read "Record TODO for project: "
                                (org-projectile:known-projects))
-   capture-template))
+   capture-template additional-options))
 
 ;;;###autoload
-(defun org-projectile:capture-for-current-project (&optional capture-template)
+(defun org-projectile:capture-for-current-project
+    (&optional capture-template &rest additional-options)
   "Capture a TODO for the current active projectile project.
 
 If CAPTURE-TEMPLATE is provided use it as the capture template for the TODO."
   (interactive)
   (let ((project-name (projectile-project-name)))
     (if (projectile-project-p)
-        (org-projectile:capture-for-project project-name capture-template)
+        (apply #'org-projectile:capture-for-project
+               project-name capture-template additional-options)
       (error (format "%s is not a recognized projectile project." project-name)))))
 
 (provide 'org-projectile)
