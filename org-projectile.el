@@ -250,12 +250,12 @@ location of the filepath cache."
   (setq org-projectile:project-name-to-location
         'org-projectile:project-name-to-location-prompt))
 
-(defun org-projectile:location-for-project (project-name &optional for-insert)
+(defun org-projectile:location-for-project (project-name)
   (let* ((filename (funcall org-projectile:project-name-to-org-file project-name)))
     (switch-to-buffer (find-file-noselect filename))
     (funcall org-projectile:project-name-to-location project-name)))
 
-(defun org-projectile:target-subheading-and-return-marker (&optional for-insert)
+(defun org-projectile:target-subheading-and-return-marker ()
   (org-end-of-line)
   (org-projectile:end-of-properties)
   ;; It sucks that this has to be done, but we have to insert a
@@ -263,7 +263,7 @@ location of the filepath cache."
   ;; capture to actually insert the template as a subtree of the
   ;; selected entry. We return a marker where the dummy subheading
   ;; was created so that it can be deleted later.
-  (when (and for-insert (not (save-excursion (org-goto-first-child))))
+  (when (not (save-excursion (org-goto-first-child)))
     (save-excursion (org-insert-subheading nil) (point-marker))))
 
 (defun org-projectile:file-truename (filepath)
@@ -381,7 +381,7 @@ location of the filepath cache."
     (org-capture-put :template (org-capture-fill-template capture-template))
     (org-capture-set-target-location
      `(function ,(lambda () (setq org-projectile:do-target-entry
-                                  (org-projectile:location-for-project project-name t)))))
+                                  (org-projectile:location-for-project project-name)))))
     ;; Apparently this needs to be forced because (org-at-heading-p)
     ;; will not be true and so `org-capture-set-target-location` will
     ;; set this value to nil.
