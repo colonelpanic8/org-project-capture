@@ -255,7 +255,7 @@ location of the filepath cache."
     (switch-to-buffer (find-file-noselect filename))
     (funcall org-projectile:project-name-to-location project-name)))
 
-(defun org-projectile:target-subheading-and-return-marker ()
+(defun org-projectile:target-subheading-and-return-marker (&optional for-insert)
   (org-end-of-line)
   (org-projectile:end-of-properties)
   ;; It sucks that this has to be done, but we have to insert a
@@ -348,8 +348,11 @@ location of the filepath cache."
 
 (defvar dired-buffers)
 
-(defun org-projectile:capture-for-project (project-name &optional capture-template)
-  (org-capture-set-plist (org-projectile:project-todo-entry nil capture-template))
+(defun org-projectile:capture-for-project
+    (project-name &optional capture-template &rest additional-options)
+  (org-capture-set-plist
+   (apply #'org-projectile:project-todo-entry
+          nil capture-template nil additional-options))
   ;; TODO: super gross that this had to be copied from org-capture,
   ;; Unfortunately, it does not seem to be possible to call into org-capture
   ;; because it makes assumptions that make it impossible to set things up
@@ -431,7 +434,9 @@ location of the filepath cache."
       (progn
         (goto-char (point-max))
         (or (bolp) (insert "\n"))
-        (insert "* " linked-heading)
+        (let ((org-insert-heading-respect-content t))
+          (org-insert-heading nil nil t))
+        (insert linked-heading)
         (when org-projectile:counts-in-heading (insert " [/]"))))
     (nth 4 (org-heading-components))))
 
@@ -520,25 +525,29 @@ as the capture template."
     (user-error "%s" "This command is only available to helm users. Install helm and try again.")))
 
 ;;;###autoload
-(defun org-projectile:project-todo-completing-read (&optional capture-template)
+(defun org-projectile:project-todo-completing-read
+    (&optional capture-template &rest additional-options)
   "Select a project using a `projectile-completing-read' and record a TODO.
 
 If CAPTURE-TEMPLATE is provided use it as the capture template for the TODO."
   (interactive)
-  (org-projectile:capture-for-project
+  (apply
+   #'org-projectile:capture-for-project
    (projectile-completing-read "Record TODO for project: "
                                (org-projectile:known-projects))
-   capture-template))
+   capture-template additional-options))
 
 ;;;###autoload
-(defun org-projectile:capture-for-current-project (&optional capture-template)
+(defun org-projectile:capture-for-current-project
+    (&optional capture-template &rest additional-options)
   "Capture a TODO for the current active projectile project.
 
 If CAPTURE-TEMPLATE is provided use it as the capture template for the TODO."
   (interactive)
   (let ((project-name (projectile-project-name)))
     (if (projectile-project-p)
-        (org-projectile:capture-for-project project-name capture-template)
+        (apply #'org-projectile:capture-for-project
+               project-name capture-template additional-options)
       (error (format "%s is not a recognized projectile project." project-name)))))
 
 (provide 'org-projectile)
