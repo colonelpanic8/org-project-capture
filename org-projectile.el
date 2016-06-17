@@ -431,7 +431,9 @@ location of the filepath cache."
       (progn
         (goto-char (point-max))
         (or (bolp) (insert "\n"))
-        (insert "* " linked-heading)
+        (let ((org-insert-heading-respect-content t))
+          (org-insert-heading nil nil t))
+        (insert linked-heading)
         (when org-projectile:counts-in-heading (insert " [/]"))))
     (nth 4 (org-heading-components))))
 
