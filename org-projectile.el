@@ -255,7 +255,7 @@ location of the filepath cache."
     (switch-to-buffer (find-file-noselect filename))
     (funcall org-projectile:project-name-to-location project-name)))
 
-(defun org-projectile:target-subheading-and-return-marker ()
+(defun org-projectile:target-subheading-and-return-marker (&optional for-insert)
   (org-end-of-line)
   (org-projectile:end-of-properties)
   ;; It sucks that this has to be done, but we have to insert a
