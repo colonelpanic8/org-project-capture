@@ -111,7 +111,7 @@ If you wish to use this type of functionality with ~org-projectile:project-todo-
     (if arg "* TODO %? %a\n" nil)))
 #+END_SRC
 
-*** Custom TODO location storage specification
+** Custom TODO location storage specification
 The variables 
 ~org-projectile:project-name-to-org-file~
 ~org-projectile:project-name-to-location-one-file~
@@ -119,3 +119,5 @@ The variables
 
 As an example of what is possible with these functions, take a look at
 ~org-projectile:project-name-to-org-file-hybrid~.
+** Author's Configuration
+The author's configuration can be found [[https://github.com/IvanMalison/dotfiles/tree/master/dotfiles/emacs.d#org-projectile][here]]. Check it out for some ideas about how to customize org-projectile.
