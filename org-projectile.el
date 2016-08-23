@@ -270,7 +270,9 @@ location of the filepath cache."
 
 (defun org-projectile:file-truename (filepath)
   (when filepath
-    (file-truename filepath)))
+    (if (find-file-name-handler filepath 'file-truename)
+        filepath ;; skip if the file requires special handling
+      (file-truename filepath))))
 
 (defun org-projectile:project-root-of-filepath (filepath)
   (org-projectile:file-truename
