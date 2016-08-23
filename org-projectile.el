@@ -152,8 +152,10 @@
          (current-value (assoc project-name project-to-org-filepath)))
     (when (or (not (file-exists-p org-file-truename)) (file-directory-p org-file-truename))
       (throw "The provided filepath is invalid" org-file))
-    (if current-value (setcdr current-value org-file-truename)
-      (cl-pushnew 'project-to-org-filepath `(,project-name . ,org-file-truename)))
+    (if current-value
+        (setcdr current-value org-file-truename)
+      (push (cons project-name org-file-truename)
+            project-to-org-filepath))
     (org-projectile:write-project-to-org-filepath
      project-to-org-filepath project-to-org-filepath-filepath)))
 
