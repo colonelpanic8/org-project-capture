@@ -29,11 +29,14 @@
 ;;; Code:
 
 (require 'cl-lib)
-(require 'org-capture)
+(require 'eieio)
+(require 'org-category-capture)
+(require 'pcache)
 (require 'projectile)
 
 (defgroup org-projectile ()
   "Customizations for org-projectile."
+  :group 'org
   :prefix "org-projectile-")
 
 (defcustom org-projectile:projects-file "~/org/projects.org"
