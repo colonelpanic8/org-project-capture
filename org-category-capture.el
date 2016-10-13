@@ -22,9 +22,12 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'eieio)
 (require 'org)
 (require 'org-capture)
+;; XXX: dired-buffers is used below
+(require 'dired)
 
 (defclass occ-strategy ()
   ())
@@ -33,12 +36,17 @@
 
 (defmethod occ-get-todo-files ((strategy occ-strategy)))
 
-(defmethod occ-get-capture-location ((strategy occ-strategy) category)
-  (let ((filepath (occ-get-capture-file strategy category)))
-    (org-find-exact-headline-in-buffer
-     category (find-file-noselect filepath t))))
-
 (defmethod occ-get-capture-file ((strategy occ-strategy) category))
+
+(defmethod occ-get-capture-marker ((strategy occ-strategy) context)
+  "Return a marker that corresponds to the capture location for CONTEXT."
+  (with-slots (category) context
+    (let ((filepath (occ-get-capture-file strategy context)))
+      (org-find-exact-headline-in-buffer
+       category (find-file-noselect filepath t)))))
+
+(defmethod occ-target-entry-p ((strategy occ-strategy) context)
+  t)
 
 (defmethod occ-build-context ((strategy occ-strategy) &rest args)
   (apply 'make-instance :strategy strategy args))
@@ -64,14 +72,13 @@
     ;; TODO/XXX: super gross that this had to be copied from org-capture,
     ;; Unfortunately, it does not seem to be possible to call into org-capture
     ;; because it makes assumptions that make it impossible to set things up
-    ;; properly
+    ;; properly. Specifically, the business logic of `org-capture' is tightly
+    ;; coupled to the UI/user interactions that usually take place.
     (let ((orig-buf (current-buffer))
           (annotation (if (and (boundp 'org-capture-link-is-already-stored)
                                org-capture-link-is-already-stored)
                           (plist-get org-store-link-plist :annotation)
-                        (ignore-errors (org-store-link nil))))
-          org-projectile:subheading-cleanup-marker
-          org-projectile:do-target-entry)
+                        (ignore-errors (org-store-link nil)))))
       (org-capture-put :original-buffer orig-buf
                        :original-file (or (buffer-file-name orig-buf)
                                           (and (featurep 'dired)
@@ -86,24 +93,14 @@
                        :default-time
                        (or org-overriding-default-time
                            (org-current-time)))
-      (org-capture-put :template (org-capture-fill-template capture-template))
+      (org-capture-put :template (org-capture-fill-template template))
       (org-capture-set-target-location
-       `(function ,(lambda () (setq org-projectile:do-target-entry
-                                    (org-projectile:location-for-project project-name)))))
-      ;; Apparently this needs to be forced because (org-at-heading-p)
-      ;; will not be true and so `org-capture-set-target-location` will
-      ;; set this value to nil.
-      ;; TODO(@IvanMalison): Perhaps there is a better way to do this?
-      ;; Maybe something that would allow us to get rid of the horrible
-      ;; subheading-cleanup-marker hack?
-      (org-capture-put :target-entry-p org-projectile:do-target-entry)
-      (when org-projectile:do-target-entry
-        (setq org-projectile:subheading-cleanup-marker
-              (org-projectile:target-subheading-and-return-marker)))
-      (org-capture-place-template)
-      (when org-projectile:subheading-cleanup-marker
-        (org-projectile:cleanup-subheading
-         org-projectile:subheading-cleanup-marker)))))
+       (list 'function (lambda ()
+                         (let ((marker (occ-get-capture-marker strategy category)))
+                           (switch-to-buffer (marker-buffer marker))
+                           (goto-char (marker-position marker))))
+      (org-capture-put :target-entry-p (occ-target-entry-p strategy context))
+      (org-capture-place-template))))))
 
 (provide 'org-category-capture)
 ;;; org-category-capture.el ends here
