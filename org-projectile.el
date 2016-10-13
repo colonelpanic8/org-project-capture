@@ -336,12 +336,13 @@ location of the filepath cache."
         (match-string-no-properties 4) heading)))
 
 (defun org-projectile:known-projects ()
-  (remove-if
-   #'null
+  (cl-remove-if
+   'null
    (delete-dups
-    `(,@(mapcar #'org-projectile:project-heading-from-file
+    (nconc
+     (mapcar #'org-projectile:project-heading-from-file
                 (projectile-relevant-known-projects))
-      ,@(org-map-entries
+     (org-map-entries
          (lambda () (org-projectile:get-link-description
                      (nth 4 (org-heading-components)))) nil
                      (funcall org-projectile:todo-files)
