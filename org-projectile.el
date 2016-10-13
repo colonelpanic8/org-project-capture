@@ -32,11 +32,29 @@
 (require 'org-capture)
 (require 'projectile)
 
-(defvar org-projectile:projects-file "~/org/projects.org")
-(defvar org-projectile:per-repo-filename "todo.org")
+(defgroup org-projectile ()
+  "Customizations for org-projectile."
+  :prefix "org-projectile-")
 
-(defvar org-projectile:capture-template "* TODO %?\n")
-(defvar org-projectile:linked-capture-template "* TODO %? %A\n")
+(defcustom org-projectile:projects-file "~/org/projects.org"
+  "The path to the file in which projectile TODOs will be stored."
+  :type '(string)
+  :group 'org-projectile)
+
+(defcustom org-projectile:per-repo-filename "TODO.org"
+  "The path (relative to the project repository) to project TODOs."
+  :type '(string)
+  :group 'org-projectile)
+
+(defcustom org-projectile:capture-template "* TODO %?\n"
+  "The default capture template to use for org-projectile TODOs."
+  :type '(string)
+  :group 'org-projectile)
+
+(defcustom org-projectile:linked-capture-template "* TODO %? %A\n"
+  "The default linked capture template to use for org-projectile TODOs."
+  :type '(string)
+  :group 'org-projectile)
 
 (defvar org-projectile:force-linked t)
 (defvar org-projectile:counts-in-heading t)
