@@ -6,7 +6,7 @@
 ;; Keywords: org projectile todo
 ;; URL: https://github.com/IvanMalison/org-projectile
 ;; Version: 0.2.1
-;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "24"))
+;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "24") (pcache "0.4.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -59,14 +59,57 @@
   :type '(string)
   :group 'org-projectile)
 
-(defvar org-projectile:force-linked t)
-(defvar org-projectile:counts-in-heading t)
-(defvar org-projectile:subheading-selection t)
+(defcustom org-projectile:force-linked t
+  "Whether to make project category headings links to their projects."
+  :type '(boolean)
+  :group 'org-projectile)
+
+(defcustom org-projectile:counts-in-heading t
+  "Whether or not to make projectile category headings display counts."
+  :type '(boolean)
+  :group 'org-projectile)
+
+(defcustom org-projectile:subheading-selection t
+  "Controls whether or not project subheading selection is enabled."
+  :type '(boolean)
+  :group 'org-projectile)
+
+(defvar org-projectile:path-to-category
+  (pcache-repository "org-projectile:path-to-category"))
+
+(defclass org-projectile:per-repo-strategy (occ-strategy) nil)
+
+(defmethod occ-get-categories ((strategy org-projectile:per-repo-strategy))
+  
+  )
+
+(defmethod occ-get-todo-files ((strategy org-projectile:per-repo-strategy))
+  (cl-loop for path in (projectile-relevant-known-projects)
+           for todo-filepath = (concat (file-name-as-directory path)
+                                        org-projectile:per-repo-filename)
+           if (file-exists-p todo-filepath)
+           collect todo-filepath))
+
+(defmethod occ-get-capture-file ((strategy org-projectile:per-repo-strategy) category))
+
+(defmethod occ-get-capture-marker ((strategy org-projectile:per-repo-strategy) context)
+  "Return a marker that corresponds to the capture location for CONTEXT."
+  )
+
+(defmethod occ-target-entry-p ((strategy org-projectile:per-repo-strategy) context)
+  nil)
+
+
+(defvar org-projectile:strategy
+  
+  )
 
 (defvar org-projectile:project-name-to-org-file
   'org-projectile:project-name-to-org-file-one-file)
+
 (defvar org-projectile:project-name-to-location
   'org-projectile:project-name-to-location-one-file)
+
 (defvar org-projectile:todo-files 'org-projectile:default-todo-files)
 
 ;; For a single projects file
