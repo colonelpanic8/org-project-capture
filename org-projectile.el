@@ -74,6 +74,11 @@
   :type '(boolean)
   :group 'org-projectile)
 
+(defcustom org-projectile:allow-tramp-projects nil
+  "Whether to make project category headings links to their projects."
+  :type '(boolean)
+  :group 'org-projectile)
+
 (defvar org-projectile:path-to-category
   (pcache-repository "org-projectile:path-to-category"))
 
@@ -339,17 +344,18 @@ location of the filepath cache."
       (file-truename filepath))))
 
 (defun org-projectile:project-root-of-filepath (filepath)
-  (org-projectile:file-truename
-   (let ((dir (file-name-directory filepath)))
-     (--some (let* ((cache-key (format "%s-%s" it dir))
-                    (cache-value (gethash
-                                  cache-key projectile-project-root-cache)))
-               (if cache-value
-                   cache-value
-                 (let ((value (funcall it (org-projectile:file-truename dir))))
-                   (puthash cache-key value projectile-project-root-cache)
-                   value)))
-             projectile-project-root-files-functions))))
+  (let ((no-handler (eq nil (find-file-name-handler filepath 'file-truename))))
+    (when (or no-handler org-projectile:allow-tramp-projects)
+      (let ((dir (file-name-directory filepath)))
+        (--some (let* ((cache-key (format "%s-%s" it dir))
+                       (cache-value (gethash
+                                     cache-key projectile-project-root-cache)))
+                  (if cache-value
+                      cache-value
+                    (let ((value (funcall it (org-projectile:file-truename dir))))
+                      (puthash cache-key value projectile-project-root-cache)
+                      value)))
+                projectile-project-root-files-functions)))))
 
 (defun org-projectile:project-todo-entry
     (&optional capture-character capture-template capture-heading
