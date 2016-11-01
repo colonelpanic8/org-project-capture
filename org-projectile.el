@@ -86,24 +86,31 @@
 
 (defvar org-projectile:target-entry t)
 
-(defclass occ-migration-strategy (occ-strategy) nil)
+(defclass org-projectile:migration-strategy (occ-strategy) nil)
 
-(defmethod occ-get-categories ((strategy occ-strategy))
+(defmethod occ-get-categories ((strategy org-projectile:migration-strategy))
   (org-projectile:known-projects))
 
-(defmethod occ-get-todo-files ((strategy occ-strategy))
+(defmethod occ-get-todo-files ((strategy org-projectile:migration-strategy))
   (org-projectile:todo-files))
 
-(defmethod occ-get-capture-file ((strategy occ-strategy) category)
-  (org-projectile:project-location-from-name category))
+(defmethod occ-get-capture-file ((strategy org-projectile:migration-strategy) context)
+  (with-slots (category) context
+      (funcall org-projectile:project-name-to-org-file category)))
 
-(defmethod occ-get-capture-marker ((strategy occ-strategy) context)
+(defmethod occ-get-capture-marker ((strategy org-projectile:migration-strategy) context)
   "Return a marker that corresponds to the capture location for CONTEXT."
   (with-slots (category) context
-    (org-projectile:location-for-project category)))
+    (let ((filepath (occ-get-capture-file strategy context)))
+      (save-excursion (with-current-buffer (find-file-noselect filepath t)
+        (funcall org-projectile:project-name-to-location category)
+        (point-marker))))))
 
-(defmethod occ-target-entry-p ((strategy occ-strategy) context)
+(defmethod occ-target-entry-p ((strategy org-projectile:migration-strategy) context)
   org-projectile:target-entry)
+
+(defvar org-projectile:capture-strategy
+  (make-instance 'org-projectile:migration-strategy))
 
 
 
@@ -490,17 +497,23 @@ location of the filepath cache."
                   (helm :sources (org-projectile:helm-subheadings-source
                                   subheadings-to-point))))
              (goto-char selection)))))
+
   (defun org-projectile:helm-subheadings-source (subheadings-to-point)
     (helm-build-sync-source "Choose a subheading:"
       :candidates subheadings-to-point))
+
   (defun org-projectile:helm-source (&optional capture-template)
     (helm-build-sync-source "Org Capture Options:"
       :candidates (cl-loop for project in (org-projectile:known-projects)
                            collect `(,project . ,project))
       :action `(("Do capture" .
                  ,(lambda (project)
-                    (org-projectile:capture-for-project
-                     project capture-template)))))))
+                    (occ-capture
+                     (make-instance 'occ-context
+                                    :category project
+                                    :options nil
+                                    :template (or capture-template org-projectile:capture-template)
+                                    :strategy org-projectile:capture-strategy))))))))
 
 (defun org-projectile:get-subheadings (&optional scope)
   (unless scope (setq scope 'tree))
@@ -546,11 +559,13 @@ as the capture template."
 
 If CAPTURE-TEMPLATE is provided use it as the capture template for the TODO."
   (interactive)
-  (apply
-   #'org-projectile:capture-for-project
-   (projectile-completing-read "Record TODO for project: "
-                               (org-projectile:known-projects))
-   capture-template additional-options))
+  (occ-capture
+   (make-instance 'occ-context
+                  :category (projectile-completing-read "Record TODO for project: "
+
+                  :template (or capture-template org-projectile:capture-template)
+                  :options additional-options
+                  :strategy org-projectile:capture-strategy))))
 
 ;;;###autoload
 (defun org-projectile:capture-for-current-project
@@ -561,8 +576,12 @@ If CAPTURE-TEMPLATE is provided use it as the capture template for the TODO."
   (interactive)
   (let ((project-name (projectile-project-name)))
     (if (projectile-project-p)
-        (apply #'org-projectile:capture-for-project
-               project-name capture-template additional-options)
+        (occ-capture
+         (make-instance 'occ-context
+                        :category project-name
+                        :template (or capture-template org-projectile:capture-template)
+                        :options additional-options
+                        :strategy org-projectile:capture-strategy))
       (error (format "%s is not a recognized projectile project." project-name)))))
 
 (provide 'org-projectile)

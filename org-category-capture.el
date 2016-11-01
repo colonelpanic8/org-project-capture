@@ -93,11 +93,17 @@
       (org-capture-put :template (org-capture-fill-template template))
       (org-capture-set-target-location
        (list 'function (lambda ()
-                         (let ((marker (occ-get-capture-marker strategy category)))
-                           (switch-to-buffer (marker-buffer marker))
-                           (goto-char (marker-position marker))))
+                         (occ-capture-goto-marker context))))
       (org-capture-put :target-entry-p (occ-target-entry-p strategy context))
-      (org-capture-place-template))))))
+      (org-capture-place-template))))
+
+(defun occ-capture-goto-marker (context)
+  (let ((marker (occ-get-capture-marker context)))
+    (switch-to-buffer (marker-buffer marker))
+    (goto-char (marker-position marker))))
+
+(defmethod occ-get-capture-marker ((context occ-context))
+  (occ-get-capture-marker (oref context strategy) context))
 
 (provide 'org-category-capture)
 ;;; org-category-capture.el ends here
