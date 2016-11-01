@@ -48,9 +48,6 @@
 (defmethod occ-target-entry-p ((strategy occ-strategy) context)
   t)
 
-(defmethod occ-build-context ((strategy occ-strategy) &rest args)
-  (apply 'make-instance :strategy strategy args))
-
 (defclass occ-context ()
   ((category :initarg :category)
    (template :initarg :template)

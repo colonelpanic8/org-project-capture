@@ -79,35 +79,33 @@
   :type '(boolean)
   :group 'org-projectile)
 
+
+
 (defvar org-projectile:path-to-category
   (pcache-repository "org-projectile:path-to-category"))
 
-(defclass org-projectile:per-repo-strategy (occ-strategy) nil)
+(defvar org-projectile:target-entry t)
 
-(defmethod occ-get-categories ((strategy org-projectile:per-repo-strategy))
-  
-  )
+(defclass occ-migration-strategy (occ-strategy) nil)
 
-(defmethod occ-get-todo-files ((strategy org-projectile:per-repo-strategy))
-  (cl-loop for path in (projectile-relevant-known-projects)
-           for todo-filepath = (concat (file-name-as-directory path)
-                                        org-projectile:per-repo-filename)
-           if (file-exists-p todo-filepath)
-           collect todo-filepath))
+(defmethod occ-get-categories ((strategy occ-strategy))
+  (org-projectile:known-projects))
 
-(defmethod occ-get-capture-file ((strategy org-projectile:per-repo-strategy) category))
+(defmethod occ-get-todo-files ((strategy occ-strategy))
+  (org-projectile:todo-files))
 
-(defmethod occ-get-capture-marker ((strategy org-projectile:per-repo-strategy) context)
+(defmethod occ-get-capture-file ((strategy occ-strategy) category)
+  (org-projectile:project-location-from-name category))
+
+(defmethod occ-get-capture-marker ((strategy occ-strategy) context)
   "Return a marker that corresponds to the capture location for CONTEXT."
-  )
+  (with-slots (category) context
+    (org-projectile:location-for-project category)))
 
-(defmethod occ-target-entry-p ((strategy org-projectile:per-repo-strategy) context)
-  nil)
+(defmethod occ-target-entry-p ((strategy occ-strategy) context)
+  org-projectile:target-entry)
 
-
-(defvar org-projectile:strategy
-  
-  )
+
 
 (defvar org-projectile:project-name-to-org-file
   'org-projectile:project-name-to-org-file-one-file)
@@ -134,7 +132,8 @@
   (setq org-projectile:project-name-to-org-file
         'org-projectile:project-name-to-org-file-one-file)
   (setq org-projectile:project-name-to-location
-        'org-projectile:project-name-to-location-one-file))
+        'org-projectile:project-name-to-location-one-file)
+  (setq org-projectile:target-entry t))
 
 ;; For repo files in the projectile project path
 (defun org-projectile:project-name-to-org-file-per-repo (project-name)
@@ -148,6 +147,7 @@
 (defun org-projectile:per-repo ()
   "Use org-projectile in per-repo mode."
   (interactive)
+  (setq org-projectile:target-entry nil)
   (setq org-projectile:todo-files 'org-projectile:default-todo-files)
   (setq org-projectile:project-name-to-org-file
         'org-projectile:project-name-to-org-file-per-repo)
@@ -314,6 +314,8 @@ location of the filepath cache."
 (defun org-projectile:prompt ()
   "Use the prompt mode of org-projectile."
   (interactive)
+  ;; TODO this needs to be more nuanced.
+  (setq org-projectile:target-entry t)
   (setq org-projectile:todo-files
         'org-projectile:todo-files-project-to-org-filepath)
   (setq org-projectile:project-name-to-org-file
@@ -325,17 +327,6 @@ location of the filepath cache."
   (let* ((filename (funcall org-projectile:project-name-to-org-file project-name)))
     (switch-to-buffer (find-file-noselect filename))
     (funcall org-projectile:project-name-to-location project-name)))
-
-(defun org-projectile:target-subheading-and-return-marker ()
-  (org-end-of-line)
-  (org-projectile:end-of-properties)
-  ;; It sucks that this has to be done, but we have to insert a
-  ;; subheading if the entry does not have one in order to convince
-  ;; capture to actually insert the template as a subtree of the
-  ;; selected entry. We return a marker where the dummy subheading
-  ;; was created so that it can be deleted later.
-  (when (not (save-excursion (org-goto-first-child)))
-    (save-excursion (org-insert-subheading nil) (point-marker))))
 
 (defun org-projectile:file-truename (filepath)
   (when filepath
@@ -420,57 +411,6 @@ location of the filepath cache."
 
 (defun org-projectile:project-location-from-name (name)
   (cdr (assoc name (org-projectile:project-name-to-location-alist))))
-
-(defvar dired-buffers)
-
-(defun org-projectile:capture-for-project
-    (project-name &optional capture-template &rest additional-options)
-  (org-capture-set-plist
-   (apply #'org-projectile:project-todo-entry
-          nil capture-template nil additional-options))
-  ;; TODO: super gross that this had to be copied from org-capture,
-  ;; Unfortunately, it does not seem to be possible to call into org-capture
-  ;; because it makes assumptions that make it impossible to set things up
-  ;; properly
-  (let ((orig-buf (current-buffer))
-        (annotation (if (and (boundp 'org-capture-link-is-already-stored)
-                             org-capture-link-is-already-stored)
-                        (plist-get org-store-link-plist :annotation)
-                      (ignore-errors (org-store-link nil))))
-        org-projectile:subheading-cleanup-marker
-        org-projectile:do-target-entry)
-    (org-capture-put :original-buffer orig-buf
-                     :original-file (or (buffer-file-name orig-buf)
-                                        (and (featurep 'dired)
-                                             (car (rassq orig-buf dired-buffers))))
-                     :original-file-nondirectory
-                     (and (buffer-file-name orig-buf)
-                          (file-name-nondirectory
-                           (buffer-file-name orig-buf)))
-                     :annotation annotation
-                     :initial ""
-                     :return-to-wconf (current-window-configuration)
-                     :default-time
-                     (or org-overriding-default-time
-                         (org-current-time)))
-    (org-capture-put :template (org-capture-fill-template capture-template))
-    (org-capture-set-target-location
-     `(function ,(lambda () (setq org-projectile:do-target-entry
-                                  (org-projectile:location-for-project project-name)))))
-    ;; Apparently this needs to be forced because (org-at-heading-p)
-    ;; will not be true and so `org-capture-set-target-location` will
-    ;; set this value to nil.
-    ;; TODO(@IvanMalison): Perhaps there is a better way to do this?
-    ;; Maybe something that would allow us to get rid of the horrible
-    ;; subheading-cleanup-marker hack?
-    (org-capture-put :target-entry-p org-projectile:do-target-entry)
-    (when org-projectile:do-target-entry
-      (setq org-projectile:subheading-cleanup-marker
-            (org-projectile:target-subheading-and-return-marker)))
-    (org-capture-place-template)
-    (when org-projectile:subheading-cleanup-marker
-      (org-projectile:cleanup-subheading
-       org-projectile:subheading-cleanup-marker))))
 
 (defun org-projectile:cleanup-subheading (marker)
   (with-current-buffer (marker-buffer marker)
