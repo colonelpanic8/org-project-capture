@@ -54,9 +54,13 @@
    (options :initarg :options)
    (strategy :initarg :strategy)))
 
-(cl-defmethod occ-build-capture-template
-    ((context occ-context) &key (character "p") (heading "Category TODO"))
+(defmethod occ-build-capture-template
+  ((context occ-context) &rest args)
+  (apply 'occ-build-capture-template-emacs-24-hack context args))
 
+;; This is needed becaused cl-defmethod doesn't exist in emacs24
+(cl-defun occ-build-capture-template-emacs-24-hack
+    (context &key (character "p") (heading "Category TODO"))
   (with-slots (template options strategy) context
     (apply 'list character heading 'entry
            (list 'function (apply-partially 'occ-get-capture-location strategy context))
