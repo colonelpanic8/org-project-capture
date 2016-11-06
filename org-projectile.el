@@ -99,7 +99,7 @@
   (with-slots (category) context
       (funcall org-projectile-project-name-to-org-file category)))
 
-(defmethod occ-get-capture-marker ((_strategy org-projectile-migration-strategy) context)
+(defmethod occ-get-capture-marker ((strategy org-projectile-migration-strategy) context)
   "Return a marker that corresponds to the capture location for CONTEXT."
   (with-slots (category) context
     (let ((filepath (occ-get-capture-file strategy context)))
@@ -107,7 +107,7 @@
         (funcall org-projectile-project-name-to-location category)
         (point-marker))))))
 
-(defmethod occ-target-entry-p ((strategy org-projectile-migration-strategy) context)
+(defmethod occ-target-entry-p ((_s org-projectile-migration-strategy) _)
   org-projectile-target-entry)
 
 (defvar org-projectile-capture-strategy
