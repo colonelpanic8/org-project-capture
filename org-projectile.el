@@ -33,6 +33,7 @@
 (require 'org-category-capture)
 (require 'pcache)
 (require 'projectile)
+(require 'dash)
 
 (defgroup org-projectile ()
   "Customizations for org-projectile."
