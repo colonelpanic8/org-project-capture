@@ -490,32 +490,6 @@ location of the filepath cache."
         (unless (eq point-at-start (save-excursion (org-back-to-heading) (point)))
           (org-projectile-prompt-for-subheadings))))))
 
-;; Only define the following functions if helm is installed
-(when (require 'helm-source nil 'noerror)
-  (defun org-projectile-prompt-for-and-move-to-subheading (subheadings-to-point)
-    (cond ((eq projectile-completion-system 'helm)
-           (let ((selection
-                  (helm :sources (org-projectile-helm-subheadings-source
-                                  subheadings-to-point))))
-             (goto-char selection)))))
-
-  (defun org-projectile-helm-subheadings-source (subheadings-to-point)
-    (helm-build-sync-source "Choose a subheading:"
-      :candidates subheadings-to-point))
-
-  (defun org-projectile-helm-source (&optional capture-template)
-    (helm-build-sync-source "Org Capture Options:"
-      :candidates (cl-loop for project in (org-projectile-known-projects)
-                           collect `(,project . ,project))
-      :action `(("Do capture" .
-                 ,(lambda (project)
-                    (occ-capture
-                     (make-instance 'occ-context
-                                    :category project
-                                    :options nil
-                                    :template (or capture-template org-projectile-capture-template)
-                                    :strategy org-projectile-capture-strategy))))))))
-
 (defun org-projectile-get-subheadings (&optional scope)
   (unless scope (setq scope 'tree))
   (org-show-subtree)
