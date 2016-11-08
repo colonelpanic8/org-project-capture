@@ -54,4 +54,6 @@
                                   :options nil
                                   :template (or capture-template org-projectile-capture-template)
                                   :strategy org-projectile-capture-strategy)))))))
+
+(provide 'org-projectile-helm)
 ;;; org-projectile-helm.el ends here
