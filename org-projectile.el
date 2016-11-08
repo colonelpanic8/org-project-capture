@@ -83,7 +83,7 @@
 
 
 (defvar org-projectile-path-to-category
-  (pcache-repository :name "org-projectile-path-to-category"))
+  (pcache-repository))
 
 (defvar org-projectile-target-entry t)
 
