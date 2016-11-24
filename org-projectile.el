@@ -31,7 +31,6 @@
 (require 'cl-lib)
 (require 'eieio)
 (require 'org-category-capture)
-(require 'pcache)
 (require 'projectile)
 (require 'dash)
 
@@ -81,9 +80,6 @@
   :group 'org-projectile)
 
 
-
-(defvar org-projectile:path-to-category
-  (pcache-repository "org-projectile:path-to-category"))
 
 (defvar org-projectile:target-entry t)
 
