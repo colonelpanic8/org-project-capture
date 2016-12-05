@@ -17,7 +17,7 @@
 
 ;;; Commentary:
 
-;; The unit test suite of multi-line
+;; The unit test suite of org-projectile
 
 ;;; Code:
 
@@ -36,13 +36,17 @@
                   :strategy org-projectile:capture-strategy)))
 
 (ert-deftest test-project-todo-completing-read ()
-  (let ((only-project "only-project") place-template-called)
+  (let ((only-project "only-project")
+        place-template-called)
+    (org-projectile:per-repo)
     (noflet ((projectile-completing-read (prompt project-names)
                                        (car project-names))
-             (org-projectile:known-projects () (list only-project))
-             (org-capture-place-template () (setq place-template-called t)))
+             (org-projectile:known-projects (&rest args) (list only-project))
+             (org-capture-place-template (&rest args)
+                                         (setq place-template-called t))
+             (org-projectile:project-heading (heading) heading))
       (org-projectile:project-todo-completing-read)
       (should place-template-called))))
 
 (provide 'org-projectile-test)
-;;; multi-line-test.el ends here
+;;; org-projectile-test.el ends here
