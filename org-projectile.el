@@ -558,11 +558,12 @@ If CAPTURE-TEMPLATE is provided use it as the capture template for the TODO."
   (interactive)
   (occ-capture
    (make-instance 'occ-context
-                  :category (projectile-completing-read "Record TODO for project: "
-
+                  :category (projectile-completing-read
+                             "Record TODO for project: "
+                             (org-projectile:known-projects))
                   :template (or capture-template org-projectile:capture-template)
                   :options additional-options
-                  :strategy org-projectile:capture-strategy))))
+                  :strategy org-projectile:capture-strategy)))
 
 ;;;###autoload
 (defun org-projectile:capture-for-current-project
