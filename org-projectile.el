@@ -5,7 +5,7 @@
 ;; Author: Ivan Malison <IvanMalison@gmail.com>
 ;; Keywords: org projectile todo
 ;; URL: https://github.com/IvanMalison/org-projectile
-;; Version: 0.2.5
+;; Version: 0.2.6
 ;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "24"))
 
 ;; This program is free software; you can redistribute it and/or modify
