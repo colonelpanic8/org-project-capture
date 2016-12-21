@@ -5,8 +5,8 @@
 ;; Author: Ivan Malison <IvanMalison@gmail.com>
 ;; Keywords: org projectile todo
 ;; URL: https://github.com/IvanMalison/org-projectile
-;; Version: 0.2.5
-;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "24.3") (pcache "0.4.1"))
+;; Version: 0.2.6
+;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "24"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -31,7 +31,6 @@
 (require 'cl-lib)
 (require 'eieio)
 (require 'org-category-capture)
-(require 'pcache)
 (require 'projectile)
 (require 'dash)
 
@@ -82,10 +81,7 @@
 
 
 
-(defvar org-projectile-path-to-category
-  (pcache-repository))
-
-(defvar org-projectile-target-entry t)
+(defvar org-projectile:target-entry t)
 
 (defclass org-projectile-migration-strategy (occ-strategy) nil)
 
@@ -538,11 +534,12 @@ were part of the capture template definition."
   (interactive)
   (occ-capture
    (make-instance 'occ-context
-                  :category (projectile-completing-read "Record TODO for project: "
-
+                  :category (projectile-completing-read
+                             "Record TODO for project: "
+                             (org-projectile-known-projects))
                   :template (or capture-template org-projectile-capture-template)
-                  :options additional-options
-                  :strategy org-projectile-capture-strategy))))
+
+                  :strategy org-projectile-capture-strategy)))
 
 ;;;###autoload
 (defun org-projectile-capture-for-current-project

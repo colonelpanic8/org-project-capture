@@ -1,4 +1,4 @@
-language: emacs-lisp
+language: generic
 env:
   matrix:
     - EVMVERSION=emacs-25.1-travis

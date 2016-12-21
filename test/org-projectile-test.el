@@ -17,20 +17,36 @@
 
 ;;; Commentary:
 
-;; The unit test suite of multi-line
+;; The unit test suite of org-projectile
 
 ;;; Code:
 
 (require 'ert)
 
+(require 'noflet)
+
 (require 'org-projectile)
 
 (ert-deftest test-build-capture-template-compiles ()
-    (occ-build-capture-template (make-instance 'occ-context
-                                               :category "the-category"
-                                               :template org-projectile:capture-template
-                                               :options nil
-                                               :strategy org-projectile:capture-strategy)))
+  (occ-build-capture-template
+   (make-instance 'occ-context
+                  :category "the-category"
+                  :template org-projectile:capture-template
+                  :options nil
+                  :strategy org-projectile:capture-strategy)))
+
+(ert-deftest test-project-todo-completing-read ()
+  (let ((only-project "only-project")
+        place-template-called)
+    (org-projectile:per-repo)
+    (noflet ((projectile-completing-read (prompt project-names)
+                                       (car project-names))
+             (org-projectile:known-projects (&rest args) (list only-project))
+             (org-capture-place-template (&rest args)
+                                         (setq place-template-called t))
+             (org-projectile:project-heading (heading) heading))
+      (org-projectile:project-todo-completing-read)
+      (should place-template-called))))
 
 (provide 'org-projectile-test)
-;;; multi-line-test.el ends here
+;;; org-projectile-test.el ends here
