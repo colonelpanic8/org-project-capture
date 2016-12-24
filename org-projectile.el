@@ -3,7 +3,7 @@
 ;; Copyright (C) 2014-2016 Ivan Malison
 
 ;; Author: Ivan Malison <IvanMalison@gmail.com>
-;; Keywords: org projectile todo
+;; Keywords: org-mode projectile todo tools
 ;; URL: https://github.com/IvanMalison/org-projectile
 ;; Version: 0.2.6
 ;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "24"))
@@ -44,8 +44,8 @@
   :type '(string)
   :group 'org-projectile)
 
-(defcustom org-projectile-per-repo-filename "TODO.org"
-  "The path (relative to the project repository) to project TODOs."
+(defcustom org-projectile-per-project-filepath "TODO.org"
+  "The path (relative to the project) where todos will be stored."
   :type '(string)
   :group 'org-projectile)
 
