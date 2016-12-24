@@ -162,48 +162,6 @@
 (defmethod occ-target-entry-p ((_ org-projectile-per-project-strategy) _context)
   nil)
 
-(defun org-projectile-per-repo ()
-  "Use org-projectile in per-repo mode."
-  (interactive)
-  (setq org-projectile-target-entry nil)
-  (setq org-projectile-todo-files 'org-projectile-default-todo-files)
-  (setq org-projectile-project-name-to-org-file
-        'org-projectile-project-name-to-org-file-per-repo)
-  (setq org-projectile-project-name-to-location
-        'org-projectile-project-name-to-location-per-repo))
-
-;; Hybrid of the two approaches mentioned above
-(defvar org-projectile-project-to-approach nil)
-(defvar org-projectile-default-approach 'one-file)
-
-(defun org-projectile-get-approach-for-project (project-name)
-  (or (cdr (assoc project-name org-projectile-project-to-approach))
-      org-projectile-default-approach))
-
-(defun org-projectile-project-name-to-org-file-hybrid (project-name)
-  (let ((approach (org-projectile-get-approach-for-project project-name)))
-     (cond
-     ((equal approach 'one-file)
-      (org-projectile-project-name-to-org-file-one-file project-name))
-     ((equal approach 'per-repo)
-      (org-projectile-project-name-to-org-file-per-repo project-name)))))
-
-(defun org-projectile-project-name-to-location-hybrid (project-name)
-  (let ((approach (org-projectile-get-approach-for-project project-name)))
-    (cond
-     ((equal approach 'one-file)
-      (org-projectile-project-name-to-location-one-file project-name))
-     ((equal approach 'per-repo)
-      (org-projectile-project-name-to-location-per-repo project-name)))))
-
-(defun org-projectile-hybrid ()
-  "Use org-projectile in hybrid mode."
-  (interactive)
-  (setq org-projectile-todo-files 'org-projectile-default-todo-files)
-  (setq org-projectile-project-name-to-org-file
-        'org-projectile-project-name-to-org-file-hybrid)
-  (setq org-projectile-project-name-to-location
-        'org-projectile-project-name-to-location-hybrid))
 
 ;; Prompt for org file location on a per project basis
 (defvar org-projectile-find-org-file-for-project-function nil)
