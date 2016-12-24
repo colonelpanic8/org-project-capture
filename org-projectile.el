@@ -247,16 +247,18 @@
     (&rest additional-options &key (capture-character "p")
            (capture-template org-projectile-capture-template)
            (capture-heading "Project Todo"))
-  `(,capture-character ,capture-heading entry
-                       (function
-                        ,(lambda () (occ-capture-goto-marker
-                                    (make-instance 'occ-context
-                                                   :category (org-projectile-category-from-file
-                                                              (org-capture-get :original-file))
-                                                   :template capture-template
-                                                   :strategy org-projectile-strategy
-                                                   :options additional-options))))
-    ,capture-template ,@additional-options))
+  (let ((target-fn
+         (lambda () (occ-capture-goto-marker
+                     (make-instance 'occ-context
+                                    :category (org-projectile-category-from-file
+                                               (org-capture-get :original-file))
+                                    :template capture-template
+                                    :strategy org-projectile-strategy
+                                    :options additional-options)))))
+    `(,capture-character ,capture-heading entry
+                         (function
+                          ,target-fn)
+                         ,capture-template ,@additional-options)))
 
 (defvar org-projectile-strategy
   (make-instance 'org-projectile-per-project-strategy))
