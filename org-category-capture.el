@@ -109,5 +109,54 @@
 (defmethod occ-get-capture-marker ((context occ-context))
   (occ-get-capture-marker (oref context strategy) context))
 
+(cl-defun occ-goto-category-heading
+    (category &key (transformers '(identity)) (level 1)
+              (min (point-min)) (max (point-max)) &allow-other-keys)
+  "Find a heading with text CATEGORY (optionally transformed by TRANSFORMERS).
+
+If LEVEL is non-nil only headings at that level will be provided.
+If MIN is provided goto min before starting the search. The
+search will be bounded by MAX."
+  (or (cl-loop for fn in transformers
+           do (goto-char min)
+           for result = (occ-find-heading-at-level
+                         (funcall fn category) level max)
+           when result return result)
+      ;; Go back to the original point if we find nothing
+      (progn (goto-char min) nil)))
+
+(defun occ-find-heading-at-level (heading level max)
+  (let ((regexp (format org-complex-heading-regexp-format heading)))
+    (cl-loop for result = (re-search-forward regexp max t)
+             unless result return result
+             when (or (not level) (equal (org-current-level) level))
+             return result)))
+
+(cl-defun occ-goto-or-insert-category-heading
+    (category &rest args &key (build-heading 'identity)
+              (insert-heading-fn (apply-partially 'org-insert-heading t t t))
+              &allow-other-keys)
+  "Create a heading for CATEGORY unless one is found with `occ-goto-category-heading'.
+
+BUILD-HEADING will be applied to category to create the heading
+text. INSERT-HEADING-FN is the function that will be used to
+create the new bullet for the category heading. This function is
+tuned so that by default it looks and creates top level headings."
+  (unless (apply 'occ-goto-category-heading category args)
+    (org-end-of-line)
+    (funcall insert-heading-fn)
+    (insert (funcall build-heading category))))
+
+(defun occ-goto-or-insert-category-heading-subtree (category &rest args)
+  "Call `occ-goto-or-insert-category-heading' with CATEGORY forwarding ARGS.
+
+Provide arguments that will make it consider subheadings of the
+current heading."
+  (apply 'occ-goto-or-insert-category-heading
+         category :insert-heading-fn (apply-partially 'org-insert-subheading t)
+         :level (1+ (org-current-level)) :min (point)
+         :max (save-excursion (org-end-of-subtree) (point))
+         args))
+
 (provide 'org-category-capture)
 ;;; org-category-capture.el ends here
