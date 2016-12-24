@@ -80,72 +80,86 @@
   :group 'org-projectile)
 
 
+;; Utility functions
 
-(defvar org-projectile:target-entry t)
+(defun org-projectile-io-action-permitted (filepath)
+  (or org-projectile-allow-tramp-projects
+      (eq nil (find-file-name-handler filepath 'file-truename))))
 
-(defclass org-projectile-migration-strategy (occ-strategy) nil)
+(defun org-projectile-project-root-of-filepath (filepath)
+  (when (org-projectile-io-action-permitted filepath)
+    (let ((dir (file-name-directory filepath)))
+      (--some (let* ((cache-key (format "%s-%s" it dir))
+                     (cache-value (gethash
+                                   cache-key projectile-project-root-cache)))
+                (if cache-value
+                    cache-value
+                  (let ((value (funcall it (org-projectile-file-truename dir))))
+                    (puthash cache-key value projectile-project-root-cache)
+                    value)))
+              projectile-project-root-files-functions))))
 
-(defmethod occ-get-categories ((_strategy org-projectile-migration-strategy))
-  (org-projectile-known-projects))
+(defun org-projectile-category-from-project-root (project-root)
+  (file-name-nondirectory (directory-file-name project-root)))
 
-(defmethod occ-get-todo-files ((_strategy org-projectile-migration-strategy))
-  (org-projectile-todo-files))
+(defun org-projectile-project-heading-from-file (filename)
+  (let ((project-root (org-projectile-project-root-of-filepath filename)))
+    (when project-root
+      (org-projectile-category-from-project-root project-root))))
 
-(defmethod occ-get-capture-file ((_strategy org-projectile-migration-strategy) context)
-  (with-slots (category) context
-      (funcall org-projectile-project-name-to-org-file category)))
+(defun org-projectile-open-project (name)
+  (let* ((name-to-location (org-projectile-project-name-to-location-alist))
+         (entry (assoc name name-to-location)))
+    (when entry
+      (projectile-switch-project-by-name (cdr entry)))))
 
-(defmethod occ-get-capture-marker ((strategy org-projectile-migration-strategy) context)
-  "Return a marker that corresponds to the capture location for CONTEXT."
-  (with-slots (category) context
-    (let ((filepath (occ-get-capture-file strategy context)))
-      (save-excursion (with-current-buffer (find-file-noselect filepath t)
-        (funcall org-projectile-project-name-to-location category)
-        (point-marker))))))
-
-(defmethod occ-target-entry-p ((_s org-projectile-migration-strategy) _)
-  org-projectile-target-entry)
-
-(defvar org-projectile-capture-strategy
-  (make-instance 'org-projectile-migration-strategy))
+(defun org-projectile-default-project-categories ()
+    (mapcar (lambda (path)
+            (cons (org-projectile-category-from-project-root
+                   path) path)) projectile-known-projects))
 
 
+;; One file per project strategy
 
-(defvar org-projectile-project-name-to-org-file
-  'org-projectile-project-name-to-org-file-one-file)
+(defun org-projectile-get-project-todo-file (project-path)
+  (concat
+   (file-name-as-directory project-path) org-projectile-per-project-filepath))
 
-(defvar org-projectile-project-name-to-location
-  'org-projectile-project-name-to-location-one-file)
+(defun org-projectile-get-category-from-project-todo-file (project-path)
+  (let ((todo-filepath (org-projectile-get-project-todo-file project-path)))
+    (if (and (org-projectile-io-action-permitted todo-filepath)
+             (file-exists-p todo-filepath))
+        (with-current-buffer (find-file-noselect todo-filepath)
+          (org-refresh-category-properties)
+          org-category)
+      (org-projectile-category-from-project-root project-path))))
 
-(defvar org-projectile-todo-files 'org-projectile-default-todo-files)
+(defun org-projectile-get-project-file-categories ()
+  (mapcar 'org-projectile-get-category-from-project-todo-file
+          projectile-known-projects))
 
-;; For a single projects file
-(defun org-projectile-project-name-to-org-file-one-file (_project-name)
-  org-projectile-projects-file)
+(defclass org-projectile-per-project-strategy nil nil)
 
-(defun org-projectile-project-name-to-location-one-file (project-name)
-  (org-projectile-project-heading project-name)
-  (when org-projectile-subheading-selection
-    (org-projectile-prompt-for-subheadings 'tree))
-  t)
+(defmethod occ-get-categories ((_ org-projectile-per-project-strategy))
+  (org-projectile-get-project-file-categories))
 
-(defun org-projectile-one-file ()
-  "Use org-projectile in one-file mode."
-  (interactive)
-  (setq org-projectile-todo-files 'org-projectile-default-todo-files)
-  (setq org-projectile-project-name-to-org-file
-        'org-projectile-project-name-to-org-file-one-file)
-  (setq org-projectile-project-name-to-location
-        'org-projectile-project-name-to-location-one-file)
-  (setq org-projectile-target-entry t))
+(defmethod occ-get-todo-files ((_ org-projectile-per-project-strategy))
+  (mapcar 'org-projectile-get-project-todo-file projectile-known-projects))
 
-;; For repo files in the projectile project path
-(defun org-projectile-project-name-to-org-file-per-repo (project-name)
-  (concat (org-projectile-project-location-from-name project-name)
-          org-projectile-per-repo-filename))
+(defmethod occ-get-capture-file ((s org-projectile-per-project-strategy) category)
+  (let ((project-root
+         (cdr (assoc category
+                (org-projectile-category-to-project-path s)))))
+    (org-projectile-get-project-todo-file project-root)))
 
-(defun org-projectile-project-name-to-location-per-repo (_project-name)
-  (goto-char (point-max))
+(defmethod occ-get-capture-marker
+  ((strategy org-projectile-per-project-strategy) context)
+  (with-slots (category) context
+    (let ((filepath (occ-get-capture-file strategy category)))
+      (save-excursion (find-file-noselect filepath)
+                      (point-max-marker)))))
+
+(defmethod occ-target-entry-p ((_ org-projectile-per-project-strategy) _context)
   nil)
 
 (defun org-projectile-per-repo ()
