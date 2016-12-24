@@ -6,7 +6,7 @@
 ;; Keywords: org-mode projectile todo tools
 ;; URL: https://github.com/IvanMalison/org-projectile
 ;; Version: 0.2.6
-;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "24"))
+;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "24.3"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -118,6 +118,10 @@
             (cons (org-projectile-category-from-project-root
                    path) path)) projectile-known-projects))
 
+(defun org-projectile-invert-alist (alist)
+  (mapcar (lambda (entry)
+            (cons (cdr entry) (car entry))) alist))
+
 
 ;; One file per project strategy
 
@@ -168,14 +172,36 @@
             (cons (org-projectile-get-category-from-project-todo-file
                    path) path)) projectile-known-projects))
 
+
+;; Single file strategy
 
+(defun org-projectile-get-project-path-from-hostname-alist (hostname-alist)
+  (let ((res (assoc (s-trim (shell-command-to-string "hostname")) hostname-alist)))
+    (cdr res)))
 
+(defclass org-projectile-top-level-heading-files-strategy nil nil)
 
+(defmethod org-projectile-category-to-project-path
+  ((s org-projectile-top-level-heading-files-strategy))
+  (mapcar (lambda (category-hostname-alist)
+            (cons (car category-hostname-alist)
+                  (org-projectile-get-project-path-from-hostname-alist
+                   (cdr category-hostname-alist))))
+          (-mapcat (lambda (filepath)
+                     (occ-read-property-by-category-from-filepath
+                      filepath "ORG-PROJECTILE-FILEPATH"))
+                   (occ-get-todo-files s))))
+
+(defmethod occ-get-categories ((s org-projectile-top-level-heading-files-strategy))
   (cl-remove-if
    'null
    (delete-dups
     (nconc
+     (org-projectile-get-categories-from-project-paths)
+     (occ-get-categories-from-filepath org-projectile-projects-file)))))
 
+(defun org-projectile-get-categories-from-project-paths ()
+  (mapcar 'org-projectile-category-from-project-root projectile-known-projects))
 
 (defun org-projectile-linked-heading (heading)
   (org-make-link-string
