@@ -193,23 +193,6 @@
   (org-make-link-string
    (format "elisp:(org-projectile-open-project \"%s\")" heading) heading))
 
-(defun org-projectile-prompt-for-subheadings (&optional recursive)
-  (let ((subheadings-to-point (org-projectile-get-subheadings))
-        (point-at-start (save-excursion (org-back-to-heading) (point))))
-    (when (> (length subheadings-to-point) 1)
-      (org-projectile-prompt-for-and-move-to-subheading subheadings-to-point)
-      (when recursive
-        (unless (eq point-at-start (save-excursion (org-back-to-heading) (point)))
-          (org-projectile-prompt-for-subheadings))))))
-
-(defun org-projectile-get-subheadings (&optional scope)
-  (unless scope (setq scope 'tree))
-  (org-show-subtree)
-  (save-excursion
-    (org-map-entries (lambda () `(,(org-get-heading) . ,(point))) nil scope
-                     (lambda () (when (and (nth 2 (org-heading-components))
-                                           (not (org-entry-get nil "ORG-PROJECTILE-SUBHEADINGS")))
-                                  (org-end-of-subtree))))))
 (cl-defun org-projectile-project-todo-entry
     (&rest additional-options &key (capture-character "p")
            (capture-template org-projectile-capture-template)
