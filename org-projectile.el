@@ -164,19 +164,6 @@
 
 
 
-(defun org-projectile-project-todo-entry
-    (&optional capture-character capture-template capture-heading
-               &rest additional-options)
-  (unless capture-template (setq capture-template
-                                 org-projectile-capture-template))
-  (unless capture-character (setq capture-character "p"))
-  (unless capture-heading (setq capture-heading "Project Todo"))
-  `(,capture-character ,capture-heading entry
-                       (function
-                        (lambda () (org-projectile-location-for-project
-                                    (org-projectile-project-heading-from-file
-                                     (org-capture-get :original-file)))))
-    ,capture-template ,@additional-options))
 
 (defun org-projectile-project-heading-from-file (filename)
   (let ((project-root (org-projectile-project-root-of-filepath filename)))
@@ -269,6 +256,21 @@
                      (lambda () (when (and (nth 2 (org-heading-components))
                                            (not (org-entry-get nil "ORG-PROJECTILE-SUBHEADINGS")))
                                   (org-end-of-subtree))))))
+(cl-defun org-projectile-project-todo-entry
+    (&rest additional-options &key (capture-character "p")
+           (capture-template org-projectile-capture-template)
+           (capture-heading "Project Todo"))
+  `(,capture-character ,capture-heading entry
+                       (function
+                        ,(lambda () (occ-capture-goto-marker
+                                    (make-instance 'occ-context
+                                                   :category (org-projectile-category-from-file
+                                                              (org-capture-get :original-file))
+                                                   :template capture-template
+                                                   :strategy org-projectile-strategy
+                                                   :options additional-options))))
+    ,capture-template ,@additional-options))
+
 
 ;;;###autoload
 (defun org-projectile-toggle-subheading ()
