@@ -181,6 +181,42 @@
   (org-make-link-string
    (format "elisp:(org-projectile-open-project \"%s\")" heading) heading))
 
+(defclass org-projectile-single-file-strategy nil nil)
+
+(defmethod occ-get-categories ((s org-projectile-single-file-strategy))
+  (cl-remove-if
+   'null
+   (delete-dups
+    (nconc
+     (org-projectile-get-categories-from-project-paths)
+     (occ-get-categories-from-filepath org-projectile-projects-file)))))
+
+(defmethod occ-get-todo-files ((_ org-projectile-single-file-strategy))
+  (list org-projectile-projects-file))
+
+(defmethod occ-get-capture-file ((_ org-projectile-single-file-strategy) _)
+  org-projectile-projects-file)
+
+(defmethod occ-get-capture-marker
+  ((strategy org-projectile-single-file-strategy) context)
+  (with-slots (category) context
+    (let ((filepath (occ-get-capture-file strategy category)))
+      (with-current-buffer (find-file-noselect filepath)
+        (occ-goto-or-insert-category-heading
+         category :build-heading 'org-projectile-build-heading
+         :transformers '(identity org-projectile-linked-heading))))))
+
+(defmethod occ-target-entry-p ((_ org-projectile-single-file-strategy) context)
+  t)
+
+(defmethod org-projectile-category-to-project-path
+  ((_ org-projectile-single-file-strategy))
+  (mapcar (lambda (path)
+            (cons (org-projectile-category-from-project-root
+                   path) path)) projectile-known-projects))
+
+
+
 (cl-defun org-projectile-project-todo-entry
     (&rest additional-options &key (capture-character "p")
            (capture-template org-projectile-capture-template)
