@@ -170,18 +170,6 @@
 
 
 
-(defun org-projectile-project-heading-from-file (filename)
-  (let ((project-root (org-projectile-project-root-of-filepath filename)))
-    (when project-root
-      (file-name-nondirectory
-       (directory-file-name project-root)))))
-
-(defun org-projectile-get-link-description (heading)
-  (with-temp-buffer
-    (insert heading)
-    (goto-char (point-min))
-    (if (re-search-forward org-any-link-re nil t)
-        (match-string-no-properties 4) heading)))
 
   (cl-remove-if
    'null
