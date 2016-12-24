@@ -188,30 +188,10 @@
    (delete-dups
     (nconc
 
-(defun org-projectile-open-project (name)
-  (let* ((name-to-location (org-projectile-project-name-to-location-alist))
-         (entry (assoc name name-to-location)))
-    (when entry
-      (projectile-switch-project-by-name (cdr entry)))))
-
 
 (defun org-projectile-linked-heading (heading)
   (org-make-link-string
    (format "elisp:(org-projectile-open-project \"%s\")" heading) heading))
-
-(defun org-projectile-project-heading (heading)
-  (let ((heading-text (org-projectile-insert-or-goto-heading heading)))
-    (outline-hide-subtree)
-    (org-beginning-of-line)
-    (org-set-property "CATEGORY" heading)
-    heading-text))
-
-(defun org-projectile-end-of-properties ()
-  (let ((end-of-heading (save-excursion (outline-next-heading) (point)))
-        (last-match t))
-    (while last-match (setq last-match
-                            (re-search-forward ":END:" end-of-heading t)))
-    (point)))
 
 (defun org-projectile-prompt-for-subheadings (&optional recursive)
   (let ((subheadings-to-point (org-projectile-get-subheadings))
