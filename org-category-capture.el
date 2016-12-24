@@ -26,22 +26,18 @@
 ;; XXX: dired-buffers is used below
 (require 'dired)
 
-(defclass occ-strategy ()
-  ())
+(defclass occ-strategy nil nil)
 
 (defmethod occ-get-categories ((_ occ-strategy)))
 
 (defmethod occ-get-todo-files ((_ occ-strategy)))
 
-(defmethod occ-get-capture-file ((_ occ-strategy) category)
-  category)
+(defmethod occ-get-capture-file ((_ occ-strategy) _category))
 
-(defmethod occ-get-capture-marker ((_ occ-strategy) context)
-  "Return a marker that corresponds to the capture location for CONTEXT."
-  context)
+(defmethod occ-get-capture-marker ((_ occ-strategy) _context)
+  "Return a marker that corresponds to the capture location for CONTEXT.")
 
-(defmethod occ-target-entry-p ((_ occ-strategy) context)
-  (when context t))
+(defmethod occ-target-entry-p ((_ occ-strategy) _context))
 
 (defclass occ-context ()
   ((category :initarg :category)
@@ -113,10 +109,10 @@ If LEVEL is non-nil only headings at that level will be provided.
 If MIN is provided goto min before starting the search. The
 search will be bounded by MAX."
   (or (cl-loop for fn in transformers
-           do (goto-char min)
-           for result = (occ-find-heading-at-level
-                         (funcall fn category) level max)
-           when result return result)
+               do (goto-char min)
+               for result = (occ-find-heading-at-level
+                             (funcall fn category) level max)
+               when result return result)
       ;; Go back to the original point if we find nothing
       (progn (goto-char min) nil)))
 
