@@ -143,6 +143,7 @@ tuned so that by default it looks and creates top level headings."
   (unless (apply 'occ-goto-category-heading category args)
     (org-end-of-line)
     (funcall insert-heading-fn)
+    (org-set-property "CATEGORY" category)
     (insert (funcall build-heading category))))
 
 (defun occ-goto-or-insert-category-heading-subtree (category &rest args)
