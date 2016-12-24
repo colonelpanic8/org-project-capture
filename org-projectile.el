@@ -49,7 +49,7 @@
   :type '(string)
   :group 'org-projectile)
 
-(defcustom org-projectile-capture-template "* TODO %?\n"
+(defcustom org-projectile-capture-template "* TODO %? %a\n"
   "The default capture template to use for org-projectile TODOs."
   :type '(string)
   :group 'org-projectile)
@@ -294,9 +294,10 @@ were part of the capture template definition."
    (make-instance 'occ-context
                   :category (projectile-completing-read
                              "Record TODO for project: "
-                             (org-projectile-known-projects))
+                             (occ-get-categories org-projectile-strategy))
                   :template (or capture-template org-projectile-capture-template)
-                  :strategy org-projectile-capture-strategy)))
+                  :strategy org-projectile-strategy
+                  :options additional-options)))
 
 ;;;###autoload
 (defun org-projectile-capture-for-current-project
@@ -314,7 +315,7 @@ were part of the capture template definition."
                         :category project-name
                         :template (or capture-template org-projectile-capture-template)
                         :options additional-options
-                        :strategy org-projectile-capture-strategy))
+                        :strategy org-projectile-strategy))
       (error (format "%s is not a recognized projectile project." project-name)))))
 
 (provide 'org-projectile)
