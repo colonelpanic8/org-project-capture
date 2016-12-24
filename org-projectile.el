@@ -102,7 +102,7 @@
 (defun org-projectile-category-from-project-root (project-root)
   (file-name-nondirectory (directory-file-name project-root)))
 
-(defun org-projectile-project-heading-from-file (filename)
+(defun org-projectile-category-from-file (filename)
   (let ((project-root (org-projectile-project-root-of-filepath filename)))
     (when project-root
       (org-projectile-category-from-project-root project-root))))
