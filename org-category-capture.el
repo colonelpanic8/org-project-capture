@@ -164,19 +164,35 @@ current heading."
     (unless (equal (org-current-level) level)
       (point))))
 
-(defun occ-get-categories-from-filepath (filepath &optional goto-subtree)
+(cl-defun occ-get-value-by-category-from-filepath
+    (filepath &key goto-subtree property-fn)
   (with-current-buffer (find-file-noselect filepath)
     (org-refresh-category-properties)
     (when goto-subtree (funcall goto-subtree))
-    (org-map-entries 'org-get-category nil (when goto-subtree 'tree)
+    (org-map-entries (lambda () (cons (org-get-category)
+                                      (when property-fn (funcall property-fn))))
+                     nil (when goto-subtree 'tree)
                      (occ-level-filter (if goto-subtree
                                            (1+ (org-current-level))
                                          1)))))
 
+(defun occ-get-property-by-category-from-filepath (filepath property &rest args)
+  (apply 'occ-get-value-by-category-from-filepath filepath
+         :property-fn (lambda () (org-entry-get (point) property)) args))
+
+(defun occ-read-property-by-category-from-filepath (filepath property &rest args)
+  (apply 'occ-get-value-by-category-from-filepath filepath
+         :property-fn (lambda () (let ((p (org-entry-get (point) property)))
+                                   (when p (read p)))) args))
+
+(defun occ-get-categories-from-filepath (&rest args)
+  (mapcar 'car (apply 'occ-get-value-by-category-from-filepath args)))
+
 (defun occ-get-categories-from-headline (filepath headline)
-  (occ-get-categories-from-filepath filepath
-  (lambda () (goto-char (org-find-exact-headline-in-buffer
-                         headline (current-buffer) t)))))
+  (occ-get-categories-from-filepath
+   filepath :goto-subtree
+   (lambda () (goto-char (org-find-exact-headline-in-buffer
+                          headline (current-buffer) t)))))
 
 (provide 'org-category-capture)
 ;;; org-category-capture.el ends here
