@@ -189,37 +189,6 @@
     (when entry
       (projectile-switch-project-by-name (cdr entry)))))
 
-(defun org-projectile-insert-or-goto-heading (heading)
-  (goto-char (point-min))
-  (unless (derived-mode-p 'org-mode)
-    (error
-     "Target buffer \"%s\" for file+headline should be in Org mode"
-     (current-buffer)))
-  (let ((linked-heading (org-projectile-linked-heading heading)))
-    (if (re-search-forward
-         (format org-complex-heading-regexp-format
-                 (format "%s\\|%s" (regexp-quote linked-heading)
-                         (regexp-quote heading)))
-         nil t)
-        (progn
-          (goto-char (point-at-bol))
-          (when (and org-projectile-force-linked
-                     (looking-at
-                      (format org-complex-heading-regexp-format
-                              (regexp-quote heading))))
-            (re-search-forward heading)
-            (org-show-subtree)
-            (delete-char (* (length heading) -1))
-            (insert linked-heading)
-            (goto-char (point-at-bol))))
-      (progn
-        (goto-char (point-max))
-        (or (bolp) (insert "\n"))
-        (let ((org-insert-heading-respect-content t))
-          (org-insert-heading nil nil t))
-        (insert linked-heading)
-        (when org-projectile-counts-in-heading (insert " [/]"))))
-    (nth 4 (org-heading-components))))
 
 (defun org-projectile-linked-heading (heading)
   (org-make-link-string
