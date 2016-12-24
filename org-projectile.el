@@ -162,6 +162,11 @@
 (defmethod occ-target-entry-p ((_ org-projectile-per-project-strategy) _context)
   nil)
 
+(defmethod org-projectile-category-to-project-path
+  ((_ org-projectile-per-project-strategy))
+  (mapcar (lambda (path)
+            (cons (org-projectile-get-category-from-project-todo-file
+                   path) path)) projectile-known-projects))
 
 
 
