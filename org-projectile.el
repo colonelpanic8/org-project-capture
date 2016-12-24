@@ -175,22 +175,14 @@
 
 ;; Single file strategy
 
-(defun org-projectile-get-project-path-from-hostname-alist (hostname-alist)
-  (let ((res (assoc (s-trim (shell-command-to-string "hostname")) hostname-alist)))
-    (cdr res)))
+(defun org-projectile-get-categories-from-project-paths ()
+  (mapcar 'org-projectile-category-from-project-root projectile-known-projects))
 
 (defclass org-projectile-top-level-heading-files-strategy nil nil)
 
 (defmethod org-projectile-category-to-project-path
   ((s org-projectile-top-level-heading-files-strategy))
-  (mapcar (lambda (category-hostname-alist)
-            (cons (car category-hostname-alist)
-                  (org-projectile-get-project-path-from-hostname-alist
-                   (cdr category-hostname-alist))))
-          (-mapcat (lambda (filepath)
-                     (occ-read-property-by-category-from-filepath
-                      filepath "ORG-PROJECTILE-FILEPATH"))
-                   (occ-get-todo-files s))))
+  (org-projectile-default-project-categories))
 
 (defmethod occ-get-categories ((s org-projectile-top-level-heading-files-strategy))
   (cl-remove-if
@@ -200,14 +192,12 @@
      (org-projectile-get-categories-from-project-paths)
      (occ-get-categories-from-filepath org-projectile-projects-file)))))
 
-(defun org-projectile-get-categories-from-project-paths ()
-  (mapcar 'org-projectile-category-from-project-root projectile-known-projects))
-
 (defun org-projectile-linked-heading (heading)
   (org-make-link-string
    (format "elisp:(org-projectile-open-project \"%s\")" heading) heading))
 
-(defclass org-projectile-single-file-strategy nil nil)
+(defclass org-projectile-single-file-strategy
+  (org-projectile-top-level-heading-files-strategy) nil)
 
 (defmethod occ-get-categories ((s org-projectile-single-file-strategy))
   (cl-remove-if
