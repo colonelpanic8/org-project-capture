@@ -252,7 +252,6 @@ were part of the capture template definition."
                              "Record TODO for project: "
                              (org-projectile-known-projects))
                   :template (or capture-template org-projectile-capture-template)
-
                   :strategy org-projectile-capture-strategy)))
 
 ;;;###autoload
