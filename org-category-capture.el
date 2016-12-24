@@ -146,16 +146,44 @@ tuned so that by default it looks and creates top level headings."
     (org-set-property "CATEGORY" category)
     (insert (funcall build-heading category))))
 
+(defun occ-end-of-properties ()
+  (let ((pb (org-get-property-block (point))))
+    (when pb (goto-char (cdr pb))))
+  (end-of-line))
+
+(defun occ-insert-subheading ()
+  (occ-end-of-properties)
+  (org-insert-subheading t))
+
 (defun occ-goto-or-insert-category-heading-subtree (category &rest args)
   "Call `occ-goto-or-insert-category-heading' with CATEGORY forwarding ARGS.
 
 Provide arguments that will make it consider subheadings of the
 current heading."
   (apply 'occ-goto-or-insert-category-heading
-         category :insert-heading-fn (apply-partially 'org-insert-subheading t)
+         category :insert-heading-fn 'occ-insert-subheading
          :level (1+ (org-current-level)) :min (point)
          :max (save-excursion (org-end-of-subtree) (point))
          args))
+
+(defun occ-level-filter (level)
+  (lambda ()
+    (unless (equal (org-current-level) level)
+      (point))))
+
+(defun occ-get-categories-from-filepath (filepath &optional goto-subtree)
+  (with-current-buffer (find-file-noselect filepath)
+    (org-refresh-category-properties)
+    (when goto-subtree (funcall goto-subtree))
+    (org-map-entries 'org-get-category nil (when goto-subtree 'tree)
+                     (occ-level-filter (if goto-subtree
+                                           (1+ (org-current-level))
+                                         1)))))
+
+(defun occ-get-categories-from-headline (filepath headline)
+  (occ-get-categories-from-filepath filepath
+  (lambda () (goto-char (org-find-exact-headline-in-buffer
+                         headline (current-buffer) t)))))
 
 (provide 'org-category-capture)
 ;;; org-category-capture.el ends here
