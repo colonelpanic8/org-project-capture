@@ -164,31 +164,6 @@
 
 
 
-(defun org-projectile-location-for-project (project-name)
-  (let* ((filename (funcall org-projectile-project-name-to-org-file project-name)))
-    (switch-to-buffer (find-file-noselect filename))
-    (funcall org-projectile-project-name-to-location project-name)))
-
-(defun org-projectile-file-truename (filepath)
-  (when filepath
-    (if (find-file-name-handler filepath 'file-truename)
-        filepath ;; skip if the file requires special handling
-      (file-truename filepath))))
-
-(defun org-projectile-project-root-of-filepath (filepath)
-  (let ((no-handler (eq nil (find-file-name-handler filepath 'file-truename))))
-    (when (or no-handler org-projectile-allow-tramp-projects)
-      (let ((dir (file-name-directory filepath)))
-        (--some (let* ((cache-key (format "%s-%s" it dir))
-                       (cache-value (gethash
-                                     cache-key projectile-project-root-cache)))
-                  (if cache-value
-                      cache-value
-                    (let ((value (funcall it (org-projectile-file-truename dir))))
-                      (puthash cache-key value projectile-project-root-cache)
-                      value)))
-                projectile-project-root-files-functions)))))
-
 (defun org-projectile-project-todo-entry
     (&optional capture-character capture-template capture-heading
                &rest additional-options)
