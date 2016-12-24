@@ -191,47 +191,10 @@
     (if (re-search-forward org-any-link-re nil t)
         (match-string-no-properties 4) heading)))
 
-(defun org-projectile-known-projects ()
   (cl-remove-if
    'null
    (delete-dups
     (nconc
-     (mapcar #'org-projectile-project-heading-from-file
-                (projectile-relevant-known-projects))
-     (org-map-entries
-         (lambda () (org-projectile-get-link-description
-                     (nth 4 (org-heading-components)))) nil
-                     (funcall org-projectile-todo-files)
-                     (lambda ()
-                       (when (< 1 (nth 1 (org-heading-components)))
-                         (point))))))))
-
-(defun org-projectile-todo-files ()
-  (funcall org-projectile-todo-files))
-
-(defun org-projectile-default-todo-files ()
-  (cl-remove-if-not
-   #'file-exists-p
-   (delete-dups
-    (cl-loop for project-name in
-             (mapcar #'org-projectile-project-heading-from-file
-                     (projectile-relevant-known-projects))
-             collect (funcall org-projectile-project-name-to-org-file
-                              project-name)))))
-
-(defun org-projectile-project-name-to-location-alist ()
-  (cl-loop for project-location in projectile-known-projects
-           collect `(,(file-name-nondirectory
-                       (directory-file-name project-location)) .
-                       ,project-location)))
-
-(defun org-projectile-project-location-from-name (name)
-  (cdr (assoc name (org-projectile-project-name-to-location-alist))))
-
-(defun org-projectile-cleanup-subheading (marker)
-  (with-current-buffer (marker-buffer marker)
-    (save-excursion (goto-char (marker-position marker))
-    (kill-whole-line))))
 
 (defun org-projectile-open-project (name)
   (let* ((name-to-location (org-projectile-project-name-to-location-alist))
