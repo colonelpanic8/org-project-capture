@@ -208,6 +208,8 @@
                                                    :options additional-options))))
     ,capture-template ,@additional-options))
 
+(defvar org-projectile-strategy
+  (make-instance 'org-projectile-per-project-strategy))
 
 ;;;###autoload
 (defun org-projectile-toggle-subheading ()
