@@ -32,21 +32,19 @@
 (defclass occ-strategy ()
   ())
 
-(defmethod occ-get-categories ((strategy occ-strategy)))
+(defmethod occ-get-categories ((_ occ-strategy)))
 
-(defmethod occ-get-todo-files ((strategy occ-strategy)))
+(defmethod occ-get-todo-files ((_ occ-strategy)))
 
-(defmethod occ-get-capture-file ((strategy occ-strategy) category))
+(defmethod occ-get-capture-file ((_ occ-strategy) category)
+  category)
 
-(defmethod occ-get-capture-marker ((strategy occ-strategy) context)
+(defmethod occ-get-capture-marker ((_ occ-strategy) context)
   "Return a marker that corresponds to the capture location for CONTEXT."
-  (with-slots (category) context
-    (let ((filepath (occ-get-capture-file strategy context)))
-      (org-find-exact-headline-in-buffer
-       category (find-file-noselect filepath t)))))
+  context)
 
-(defmethod occ-target-entry-p ((strategy occ-strategy) context)
-  t)
+(defmethod occ-target-entry-p ((_ occ-strategy) context)
+  (when context t))
 
 (defclass occ-context ()
   ((category :initarg :category)
