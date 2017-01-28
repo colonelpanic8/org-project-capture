@@ -181,10 +181,10 @@
 (defclass org-projectile-top-level-heading-files-strategy nil nil)
 
 (defmethod org-projectile-category-to-project-path
-  ((s org-projectile-top-level-heading-files-strategy))
+  ((_s org-projectile-top-level-heading-files-strategy))
   (org-projectile-default-project-categories))
 
-(defmethod occ-get-categories ((s org-projectile-top-level-heading-files-strategy))
+(defmethod occ-get-categories ((_s org-projectile-top-level-heading-files-strategy))
   (cl-remove-if
    'null
    (delete-dups
@@ -199,7 +199,7 @@
 (defclass org-projectile-single-file-strategy
   (org-projectile-top-level-heading-files-strategy) nil)
 
-(defmethod occ-get-categories ((s org-projectile-single-file-strategy))
+(defmethod occ-get-categories ((_s org-projectile-single-file-strategy))
   (cl-remove-if
    'null
    (delete-dups
@@ -210,7 +210,7 @@
 (defmethod occ-get-todo-files ((_ org-projectile-single-file-strategy))
   (list org-projectile-projects-file))
 
-(defmethod occ-get-capture-file ((_ org-projectile-single-file-strategy) _)
+(defmethod occ-get-capture-file ((_ org-projectile-single-file-strategy) _c)
   org-projectile-projects-file)
 
 (defmethod occ-get-capture-marker
@@ -233,6 +233,9 @@
 
 
 
+(defvar org-projectile-strategy
+  (make-instance 'org-projectile-single-file-strategy))
+
 (cl-defun org-projectile-project-todo-entry
     (&rest additional-options &key (capture-character "p")
            (capture-template org-projectile-capture-template)
@@ -250,8 +253,6 @@
                           ,target-fn)
                          ,capture-template ,@additional-options)))
 
-(defvar org-projectile-strategy
-  (make-instance 'org-projectile-per-project-strategy))
 
 ;;;###autoload
 (defun org-projectile-toggle-subheading ()
