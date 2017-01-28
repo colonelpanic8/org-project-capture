@@ -49,7 +49,7 @@
   :type '(string)
   :group 'org-projectile)
 
-(defcustom org-projectile-capture-template "* TODO %? %a\n"
+(defcustom org-projectile-capture-template "* TODO %?\n"
   "The default capture template to use for org-projectile TODOs."
   :type '(string)
   :group 'org-projectile)
