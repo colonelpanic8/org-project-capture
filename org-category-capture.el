@@ -105,7 +105,7 @@
               (min (point-min)) (max (point-max)) &allow-other-keys)
   "Find a heading with text CATEGORY (optionally transformed by TRANSFORMERS).
 
-If LEVEL is non-nil only headings at that level will be provided.
+If LEVEL is non-nil only headings at that level will be traversed.
 If MIN is provided goto min before starting the search. The
 search will be bounded by MAX."
   (or (cl-loop for fn in transformers
@@ -123,9 +123,17 @@ search will be bounded by MAX."
              when (or (not level) (equal (org-current-level) level))
              return result)))
 
+(defun occ-insert-after-current-heading ()
+  (org-end-of-line)
+  (org-insert-heading t t t))
+
+(defun occ-insert-at-end-of-file ()
+  (goto-char (point-max))
+  (org-insert-heading t t t))
+
 (cl-defun occ-goto-or-insert-category-heading
     (category &rest args &key (build-heading 'identity)
-              (insert-heading-fn (apply-partially 'org-insert-heading t t t))
+              (insert-heading-fn 'occ-insert-at-end-of-file)
               &allow-other-keys)
   "Create a heading for CATEGORY unless one is found with `occ-goto-category-heading'.
 
@@ -134,7 +142,6 @@ text. INSERT-HEADING-FN is the function that will be used to
 create the new bullet for the category heading. This function is
 tuned so that by default it looks and creates top level headings."
   (unless (apply 'occ-goto-category-heading category args)
-    (org-end-of-line)
     (funcall insert-heading-fn)
     (org-set-property "CATEGORY" category)
     (insert (funcall build-heading category))))
