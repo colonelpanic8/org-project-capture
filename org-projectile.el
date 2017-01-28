@@ -82,6 +82,8 @@
 
 ;; Utility functions
 
+(defvar org-projectile-strategy nil)
+
 (defun org-projectile-io-action-permitted (filepath)
   (or org-projectile-allow-tramp-projects
       (eq nil (find-file-name-handler filepath 'file-truename))))
@@ -94,7 +96,7 @@
                                    cache-key projectile-project-root-cache)))
                 (if cache-value
                     cache-value
-                  (let ((value (funcall it (org-projectile-file-truename dir))))
+                  (let ((value (funcall it dir)))
                     (puthash cache-key value projectile-project-root-cache)
                     value)))
               projectile-project-root-files-functions))))
@@ -108,7 +110,7 @@
       (org-projectile-category-from-project-root project-root))))
 
 (defun org-projectile-open-project (name)
-  (let* ((name-to-location (org-projectile-project-name-to-location-alist))
+  (let* ((name-to-location (org-projectile-category-to-project-path org-projectile-strategy))
          (entry (assoc name name-to-location)))
     (when entry
       (projectile-switch-project-by-name (cdr entry)))))
@@ -160,8 +162,8 @@
   ((strategy org-projectile-per-project-strategy) context)
   (with-slots (category) context
     (let ((filepath (occ-get-capture-file strategy category)))
-      (save-excursion (find-file-noselect filepath)
-                      (point-max-marker)))))
+      (with-current-buffer (find-file-noselect filepath)
+        (point-max-marker)))))
 
 (defmethod occ-target-entry-p ((_ org-projectile-per-project-strategy) _context)
   nil)
@@ -196,6 +198,12 @@
   (org-make-link-string
    (format "elisp:(org-projectile-open-project \"%s\")" heading) heading))
 
+(defun org-projectile-build-heading (heading)
+  (when org-projectile-force-linked
+    (setq heading (org-projectile-linked-heading heading)))
+  (if org-projectile-counts-in-heading (concat heading " [/]")
+    heading))
+
 (defclass org-projectile-single-file-strategy
   (org-projectile-top-level-heading-files-strategy) nil)
 
@@ -218,11 +226,13 @@
   (with-slots (category) context
     (let ((filepath (occ-get-capture-file strategy category)))
       (with-current-buffer (find-file-noselect filepath)
-        (occ-goto-or-insert-category-heading
-         category :build-heading 'org-projectile-build-heading
-         :transformers '(identity org-projectile-linked-heading))))))
+        (save-excursion
+          (occ-goto-or-insert-category-heading
+           category :build-heading 'org-projectile-build-heading
+           :transformers '(identity org-projectile-linked-heading))
+          (point-marker))))))
 
-(defmethod occ-target-entry-p ((_ org-projectile-single-file-strategy) context)
+(defmethod occ-target-entry-p ((_ org-projectile-single-file-strategy) _c)
   t)
 
 (defmethod org-projectile-category-to-project-path
@@ -233,7 +243,7 @@
 
 
 
-(defvar org-projectile-strategy
+(setq org-projectile-strategy
   (make-instance 'org-projectile-single-file-strategy))
 
 (cl-defun org-projectile-project-todo-entry
