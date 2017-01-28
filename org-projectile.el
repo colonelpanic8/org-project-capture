@@ -229,8 +229,11 @@
         (save-excursion
           (occ-goto-or-insert-category-heading
            category :build-heading 'org-projectile-build-heading
-           :transformers '(identity org-projectile-linked-heading))
+           :transformers '(identity org-projectile-linked-heading-regexp))
           (point-marker))))))
+
+(defun org-projectile-linked-heading-regexp (heading)
+  (format "\\[\\[.*?]\\[%s]]" heading))
 
 (defmethod occ-target-entry-p ((_ org-projectile-single-file-strategy) _c)
   t)
