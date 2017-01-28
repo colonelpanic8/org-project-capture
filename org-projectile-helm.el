@@ -55,5 +55,21 @@
                                   :template (or capture-template org-projectile-capture-template)
                                   :strategy org-projectile-capture-strategy)))))))
 
+;;;###autoload
+(defun org-projectile-template-or-project (&optional arg)
+  "Select a project or org capture template and record a TODO.
+
+If ARG is provided use `org-projectile-linked-capture-template'
+as the capture template."
+  (interactive "P")
+  (if (require 'helm-org nil 'noerror)
+      (helm :sources
+	    (list (helm-source-org-capture-templates)
+		  (org-projectile-helm-source
+		   (if arg org-projectile-linked-capture-template nil)))
+	    :candidate-number-limit 99999
+	    :buffer "*helm org capture templates*")
+    (user-error "%s" "This command is only available to helm users. Install helm and try again.")))
+
 (provide 'org-projectile-helm)
 ;;; org-projectile-helm.el ends here
