@@ -44,8 +44,8 @@
 
 (defun org-projectile-helm-source (&optional capture-template)
   (helm-build-sync-source "Org Capture Options:"
-    :candidates (cl-loop for project in (org-projectile-known-projects)
-                         collect `(,project . ,project))
+    :candidates (cl-loop for project in (occ-get-categories org-projectile-strategy)
+                         collect (cons project project))
     :action `(("Do capture" .
                ,(lambda (project)
                   (occ-capture
