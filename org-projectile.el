@@ -410,7 +410,8 @@ location of the filepath cache."
 (defun org-projectile:project-name-to-location-alist ()
   (cl-loop for project-location in projectile-known-projects
            collect `(,(file-name-nondirectory
-                       (directory-file-name project-location)) .
+                       (directory-file-name
+                        (org-projectile:file-truename project-location))) .
                        ,project-location)))
 
 (defun org-projectile:project-location-from-name (name)
