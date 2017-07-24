@@ -3,10 +3,10 @@
 ;; Copyright (C) 2014-2016 Ivan Malison
 
 ;; Author: Ivan Malison <IvanMalison@gmail.com>
-;; Keywords: org projectile todo helm
+;; Keywords: org projectile todo helm outlines
 ;; URL: https://github.com/IvanMalison/org-projectile
 ;; Version: 0.0.0
-;; Package-Requires: ((org-projectile "1.0.0") (helm-core "2.3.1") (emacs "24"))
+;; Package-Requires: ((org-projectile "1.0.0") (helm-core "2.3.1") (emacs "25"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -29,9 +29,10 @@
 ;;; Code:
 
 (require 'helm)
+(require 'helm-source)
 (require 'org-projectile)
 
-(defun org-projectile-prompt-for-and-move-to-subheading (subheadings-to-point)
+(defun org-projectile-helm-prompt-for-and-move-to-subheading (subheadings-to-point)
   (cond ((eq projectile-completion-system 'helm)
          (let ((selection
                 (helm :sources (org-projectile-helm-subheadings-source
@@ -56,7 +57,7 @@
                                   :strategy org-projectile-capture-strategy)))))))
 
 ;;;###autoload
-(defun org-projectile-template-or-project (&optional arg)
+(defun org-projectile-helm-template-or-project (&optional arg)
   "Select a project or org capture template and record a TODO.
 
 If ARG is provided use `org-projectile-linked-capture-template'

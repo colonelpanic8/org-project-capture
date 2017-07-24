@@ -3,7 +3,7 @@
 ;; Copyright (C) 2014-2016 Ivan Malison
 
 ;; Author: Ivan Malison <IvanMalison@gmail.com>
-;; Keywords: org-mode projectile todo tools
+;; Keywords: org-mode projectile todo tools outlines
 ;; URL: https://github.com/IvanMalison/org-projectile
 ;; Version: 0.2.6
 ;; Package-Requires: ((org "9.0.0") (projectile "0.11.0") (dash "2.10.0") (emacs "25"))
@@ -29,10 +29,11 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'dash)
 (require 'eieio)
+(require 'org)
 (require 'org-category-capture)
 (require 'projectile)
-(require 'dash)
 
 (defgroup org-projectile ()
   "Customizations for org-projectile."
