@@ -6,7 +6,7 @@
 ;; Keywords: org-mode projectile todo tools
 ;; URL: https://github.com/IvanMalison/org-projectile
 ;; Version: 0.2.6
-;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "24.3"))
+;; Package-Requires: ((org "9.0.0") (projectile "0.11.0") (dash "2.10.0") (emacs "25"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -146,29 +146,29 @@
 
 (defclass org-projectile-per-project-strategy nil nil)
 
-(defmethod occ-get-categories ((_ org-projectile-per-project-strategy))
+(cl-defmethod occ-get-categories ((_ org-projectile-per-project-strategy))
   (org-projectile-get-project-file-categories))
 
-(defmethod occ-get-todo-files ((_ org-projectile-per-project-strategy))
+(cl-defmethod occ-get-todo-files ((_ org-projectile-per-project-strategy))
   (mapcar 'org-projectile-get-project-todo-file projectile-known-projects))
 
-(defmethod occ-get-capture-file ((s org-projectile-per-project-strategy) category)
+(cl-defmethod occ-get-capture-file ((s org-projectile-per-project-strategy) category)
   (let ((project-root
          (cdr (assoc category
                 (org-projectile-category-to-project-path s)))))
     (org-projectile-get-project-todo-file project-root)))
 
-(defmethod occ-get-capture-marker
+(cl-defmethod occ-get-capture-marker
   ((strategy org-projectile-per-project-strategy) context)
   (with-slots (category) context
     (let ((filepath (occ-get-capture-file strategy category)))
       (with-current-buffer (find-file-noselect filepath)
         (point-max-marker)))))
 
-(defmethod occ-target-entry-p ((_ org-projectile-per-project-strategy) _context)
+(cl-defmethod occ-target-entry-p ((_ org-projectile-per-project-strategy) _context)
   nil)
 
-(defmethod org-projectile-category-to-project-path
+(cl-defmethod org-projectile-category-to-project-path
   ((_ org-projectile-per-project-strategy))
   (mapcar (lambda (path)
             (cons (org-projectile-get-category-from-project-todo-file
@@ -182,11 +182,11 @@
 
 (defclass org-projectile-top-level-heading-files-strategy nil nil)
 
-(defmethod org-projectile-category-to-project-path
+(cl-defmethod org-projectile-category-to-project-path
   ((_s org-projectile-top-level-heading-files-strategy))
   (org-projectile-default-project-categories))
 
-(defmethod occ-get-categories ((_s org-projectile-top-level-heading-files-strategy))
+(cl-defmethod occ-get-categories ((_s org-projectile-top-level-heading-files-strategy))
   (cl-remove-if
    'null
    (delete-dups
@@ -207,7 +207,7 @@
 (defclass org-projectile-single-file-strategy
   (org-projectile-top-level-heading-files-strategy) nil)
 
-(defmethod occ-get-categories ((_s org-projectile-single-file-strategy))
+(cl-defmethod occ-get-categories ((_s org-projectile-single-file-strategy))
   (cl-remove-if
    'null
    (delete-dups
@@ -215,13 +215,13 @@
      (org-projectile-get-categories-from-project-paths)
      (occ-get-categories-from-filepath org-projectile-projects-file)))))
 
-(defmethod occ-get-todo-files ((_ org-projectile-single-file-strategy))
+(cl-defmethod occ-get-todo-files ((_ org-projectile-single-file-strategy))
   (list org-projectile-projects-file))
 
-(defmethod occ-get-capture-file ((_ org-projectile-single-file-strategy) _c)
+(cl-defmethod occ-get-capture-file ((_ org-projectile-single-file-strategy) _c)
   org-projectile-projects-file)
 
-(defmethod occ-get-capture-marker
+(cl-defmethod occ-get-capture-marker
   ((strategy org-projectile-single-file-strategy) context)
   (with-slots (category) context
     (let ((filepath (occ-get-capture-file strategy category)))
@@ -235,10 +235,10 @@
 (defun org-projectile-linked-heading-regexp (heading)
   (format "\\[\\[.*?]\\[%s]]" heading))
 
-(defmethod occ-target-entry-p ((_ org-projectile-single-file-strategy) _c)
+(cl-defmethod occ-target-entry-p ((_ org-projectile-single-file-strategy) _c)
   t)
 
-(defmethod org-projectile-category-to-project-path
+(cl-defmethod org-projectile-category-to-project-path
   ((_ org-projectile-single-file-strategy))
   (mapcar (lambda (path)
             (cons (org-projectile-category-from-project-root
