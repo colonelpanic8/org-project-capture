@@ -30,14 +30,16 @@
 
 (require 'helm)
 (require 'helm-source)
+(require 'org-category-capture)
 (require 'org-projectile)
 
-(defun org-projectile-helm-prompt-for-and-move-to-subheading (subheadings-to-point)
+(defun org-projectile-helm-prompt-for-and-move-to-subheading
+  (subheadings-to-point)
   (cond ((eq projectile-completion-system 'helm)
-         (let ((selection
-                (helm :sources (org-projectile-helm-subheadings-source
-                                subheadings-to-point))))
-           (goto-char selection)))))
+          (let ((selection
+                  (helm :sources (org-projectile-helm-subheadings-source
+                                   subheadings-to-point))))
+            (goto-char selection)))))
 
 (defun org-projectile-helm-subheadings-source (subheadings-to-point)
   (helm-build-sync-source "Choose a subheading:"
@@ -46,15 +48,15 @@
 (defun org-projectile-helm-source (&optional capture-template)
   (helm-build-sync-source "Org Capture Options:"
     :candidates (cl-loop for project in (occ-get-categories org-projectile-strategy)
-                         collect (cons project project))
+                  collect (cons project project))
     :action `(("Do capture" .
-               ,(lambda (project)
-                  (occ-capture
-                   (make-instance 'occ-context
-                                  :category project
-                                  :options nil
-                                  :template (or capture-template org-projectile-capture-template)
-                                  :strategy org-projectile-capture-strategy)))))))
+                ,(lambda (project)
+                   (occ-capture
+                     (make-instance 'occ-context :category project
+                       :options nil
+                       :template (or capture-template
+                                   org-projectile-capture-template)
+                       :strategy org-projectile-strategy)))))))
 
 ;;;###autoload
 (defun org-projectile-helm-template-or-project (&optional arg)
@@ -62,15 +64,12 @@
 
 If ARG is provided use `org-projectile-linked-capture-template'
 as the capture template."
-  (interactive "P")
-  (if (require 'helm-org nil 'noerror)
-      (helm :sources
-	    (list (helm-source-org-capture-templates)
-		  (org-projectile-helm-source
-		   (if arg org-projectile-linked-capture-template nil)))
-	    :candidate-number-limit 99999
-	    :buffer "*helm org capture templates*")
-    (user-error "%s" "This command is only available to helm users. Install helm and try again.")))
+  (helm :sources
+	(list (helm-source-org-capture-templates)
+	  (org-projectile-helm-source
+		(if arg org-projectile-linked-capture-template nil)))
+	:candidate-number-limit 99999
+	:buffer "*helm org capture templates*"))
 
 (provide 'org-projectile-helm)
 ;;; org-projectile-helm.el ends here
