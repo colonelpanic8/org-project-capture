@@ -275,6 +275,9 @@
                                          :strategy org-projectile-strategy
                                          :template org-projectile-capture-template)))
 
+(defun org-projectile-todo-files ()
+  (occ-get-todo-files org-projectile-strategy))
+
 ;;;###autoload
 (defun org-projectile-project-todo-completing-read
     (&optional capture-template &rest additional-options)
