@@ -1,6 +1,6 @@
 ;;; org-category-capture.el --- Contextualy capture of org-mode TODOs. -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2016 Ivan Malison
+;; Copyright (C) 2016-2017 Ivan Malison
 
 ;; Author: Ivan Malison <IvanMalison@gmail.com>
 ;; Keywords: org-mode todo tools outlines
@@ -100,20 +100,20 @@
 (cl-defmethod occ-get-capture-marker ((context occ-context))
   (occ-get-capture-marker (oref context strategy) context))
 
-(cl-defun occ-goto-category-heading
+(cl-defun occ-get-category-heading-location
     (category &rest args &key do-tree &allow-other-keys)
   "Find a heading with text or category CATEGORY."
-  (let (result)
-    (org-map-entries
-     (lambda ()
-       (when (and (not result)
-                  (equal (apply 'occ-get-heading-category args) category))
-         (setq result (point))))
-     nil (when do-tree 'tree)
-     (1+ (org-current-level))
-     (occ-level-filter (if do-tree (1+ (org-current-level)) 1)))
-    (when result
-        (goto-char result) t)))
+  (save-excursion
+    (let (result)
+      (org-map-entries
+       (lambda ()
+         (when (and (not result)
+                    (equal (apply 'occ-get-heading-category args) category))
+           (setq result (point))))
+       nil (when do-tree 'tree)
+       (1+ (org-current-level))
+       (occ-level-filter (if do-tree (1+ (org-current-level)) 1)))
+      result)))
 
 (defun occ-find-heading-at-level (heading level max)
   (let ((regexp (format org-complex-heading-regexp-format heading)))
@@ -140,10 +140,13 @@ BUILD-HEADING will be applied to category to create the heading
 text. INSERT-HEADING-FN is the function that will be used to
 create the new bullet for the category heading. This function is
 tuned so that by default it looks and creates top level headings."
-  (unless (save-excursion (apply 'occ-goto-category-heading category args))
-    (funcall insert-heading-fn)
-    (org-set-property "CATEGORY" category)
-    (insert (funcall build-heading category))))
+  (let ((category-location
+         (apply 'occ-get-category-heading-location category args)))
+    (if category-location
+        (goto-char category-location)
+      (funcall insert-heading-fn)
+      (org-set-property "CATEGORY" category)
+      (insert (funcall build-heading category)))))
 
 (defun occ-end-of-properties ()
   (let ((pb (org-get-property-block (point))))
