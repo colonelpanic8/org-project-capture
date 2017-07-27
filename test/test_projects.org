@@ -1,0 +1,16 @@
+* [[elisp:(org-projectile:open-project%20"github-search")][github-search]] [0/1]
+** TODO do my thing
+** TODO cool
+* proj1
+* proj3 [0/0]
+* emacs
+  :PROPERTIES:
+  :CATEGORY: proj4
+  :END:
+* [[elisp:(org-projectile:open-project%20"ideas")][ideas]] [0/22]
+  :PROPERTIES:
+  :CATEGORY: ideas2
+  :END:
+** TODO
+* [[elisp:(org-projectile-open-project%20"test")][test]]
+** TODO

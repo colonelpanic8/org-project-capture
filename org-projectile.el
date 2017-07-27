@@ -6,7 +6,7 @@
 ;; Keywords: org-mode projectile todo tools outlines
 ;; URL: https://github.com/IvanMalison/org-projectile
 ;; Version: 0.2.6
-;; Package-Requires: ((org "9.0.0") (projectile "0.11.0") (dash "2.10.0") (emacs "25"))
+;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "25"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -126,6 +126,17 @@
   (mapcar (lambda (entry)
             (cons (cdr entry) (car entry))) alist))
 
+(defun org-projectile-get-category-from-heading ()
+  (let* ((heading (org-get-heading))
+         (no-links
+          (replace-regexp-in-string
+           org-bracket-link-analytic-regexp
+           (lambda (m)
+             (if (match-end 5) (match-string 5 m)
+               (concat (match-string 1 m) (match-string 3 m))))
+           heading nil t)))
+    (s-trim (replace-regexp-in-string "\[[0-9]*/[0-9]*\]" "" no-links))))
+
 
 ;; One file per project strategy
 
@@ -218,7 +229,9 @@
    (delete-dups
     (nconc
      (org-projectile-get-categories-from-project-paths)
-     (occ-get-categories-from-filepath org-projectile-projects-file)))))
+     (occ-get-categories-from-filepath
+      org-projectile-projects-file
+      :get-category-from-element 'org-projectile-get-category-from-heading)))))
 
 (cl-defmethod occ-get-todo-files ((_ org-projectile-single-file-strategy))
   (list org-projectile-projects-file))
@@ -233,8 +246,9 @@
       (with-current-buffer (find-file-noselect filepath)
         (save-excursion
           (occ-goto-or-insert-category-heading
-           category :build-heading 'org-projectile-build-heading
-           :transformers '(identity org-projectile-linked-heading-regexp))
+           category
+           :build-heading 'org-projectile-build-heading
+           :get-category-from-element 'org-projectile-get-category-from-heading)
           (point-marker))))))
 
 (defun org-projectile-linked-heading-regexp (heading)

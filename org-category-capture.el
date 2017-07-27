@@ -182,12 +182,13 @@ current heading."
         (org-get-category)
       (funcall get-category-from-element))))
 
-(cl-defun occ-get-value-by-category (&key goto-subtree property-fn)
+(cl-defun occ-get-value-by-category
+    (&rest args &key goto-subtree property-fn &allow-other-keys)
   (org-refresh-category-properties)
   (when goto-subtree (funcall goto-subtree))
   (org-map-entries
    (lambda ()
-     (cons (occ-get-heading-category)
+     (cons (apply 'occ-get-heading-category args)
            (when property-fn (funcall property-fn))))
    nil (when goto-subtree 'tree)
    (occ-level-filter (if goto-subtree (1+ (org-current-level)) 1))))
