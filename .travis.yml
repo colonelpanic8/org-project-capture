@@ -2,7 +2,6 @@ language: generic
 env:
   matrix:
     - EVMVERSION=emacs-25.1-travis
-    - EVMVERSION=emacs-24.4-travis
 before_install:
   - source travis-evm-cask.sh
 install:
