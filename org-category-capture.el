@@ -115,13 +115,6 @@
        (occ-level-filter (if do-tree (1+ (org-current-level)) 1)))
       result)))
 
-(defun occ-find-heading-at-level (heading level max)
-  (let ((regexp (format org-complex-heading-regexp-format heading)))
-    (cl-loop for result = (re-search-forward regexp max t)
-             unless result return result
-             when (or (not level) (equal (org-current-level) level))
-             return result)))
-
 (defun occ-insert-after-current-heading ()
   (org-end-of-line)
   (org-insert-heading t t t))
@@ -163,10 +156,7 @@ tuned so that by default it looks and creates top level headings."
 Provide arguments that will make it consider subheadings of the
 current heading."
   (apply 'occ-goto-or-insert-category-heading
-         category :insert-heading-fn 'occ-insert-subheading
-         :level (1+ (org-current-level)) :min (point)
-         :max (save-excursion (org-end-of-subtree) (point))
-         args))
+         category :insert-heading-fn 'occ-insert-subheading :do-tree t args))
 
 (defun occ-level-filter (level)
   (lambda ()

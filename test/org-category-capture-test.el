@@ -57,10 +57,13 @@
 
 (cl-defmethod occ-target-entry-p ((_ occ-test-strategy) context) t)
 
-(defun occ-do-test-capture (category)
-  (occ-capture
-   (make-instance 'occ-context :category category :options nil :strategy
-                  (make-instance 'occ-test-strategy) :template "* TODO %?\n")))
+(defvar occ-test-text-to-insert "dummy-text")
+
+(defun occ-do-test-capture (category heading-text)
+  (let ((occ-test-text-to-insert heading-text))
+    (occ-capture
+     (make-instance 'occ-context :category category :options nil :strategy
+                    (make-instance 'occ-test-strategy) :template "* TODO %?\n"))))
 
 (defun occ-mock-place-template (&rest args)
   (goto-char (org-capture-get :pos))
@@ -70,36 +73,45 @@
     (`table-line (org-capture-place-table-line))
     (`plain (org-capture-place-plain-text))
     (`item (org-capture-place-item))
-    (`checkitem (org-capture-place-item))))
+    (`checkitem (org-capture-place-item)))
+  (insert occ-test-text-to-insert))
 
 (ert-deftest test-insert-todo ()
   (with-temp-buffer
     (org-mode)
     (insert "
+* cool
 * someproj
 * anotherproj
   :PROPERTIES:
   :CATEGORY: actualcategory
   :END:
+* something
 ") (noflet ((org-capture-place-template (&rest args)
                                         (occ-mock-place-template))
             (org-capture-narrow (&rest args)
                                 nil))
-     (occ-do-test-capture "actualcategory")
-     (occ-do-test-capture "anotherproj")
+     (occ-do-test-capture "someproj" "dummy text")
+     (occ-do-test-capture "anotherproj" "dummy text")
+     (occ-do-test-capture "actualcategory" "some text")
+     (occ-do-test-capture "someproj" "dummy text")
      (should
       (equal (buffer-string) "
+* cool
 * someproj
+** TODO dummy text
+** TODO dummy text
 * anotherproj
   :PROPERTIES:
   :CATEGORY: actualcategory
   :END:
-** TODO 
+** TODO some text
+* something
 * anotherproj
   :PROPERTIES:
   :CATEGORY: anotherproj
   :END:
-** TODO 
+** TODO dummy text
 ")))))
 
 (provide 'org-category-capture-test)
