@@ -4,7 +4,7 @@ SRCS = $(shell find .  -maxdepth 1 -name '*.el')
 OBJECTS = $(SRCS:.el=.elc)
 EMACS = $(shell sh -c 'type -P emacs')
 
-.PHONY: test compile clean install
+.PHONY: test compile recompile clean install
 
 .cask:
 	$(CASK) install
@@ -16,6 +16,8 @@ compile: $(OBJECTS)
 
 clean-elc:
 	rm -f $(OBJECTS)
+
+recompile: clean-elc compile
 
 clean: clean-elc
 	rm -rf .cask/
