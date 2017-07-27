@@ -111,13 +111,14 @@
       (org-projectile-category-from-project-root project-root))))
 
 (defun org-projectile-open-project (name)
-  (let* ((name-to-location (org-projectile-category-to-project-path org-projectile-strategy))
+  (let* ((name-to-location
+          (org-projectile-category-to-project-path org-projectile-strategy))
          (entry (assoc name name-to-location)))
     (when entry
       (projectile-switch-project-by-name (cdr entry)))))
 
 (defun org-projectile-default-project-categories ()
-    (mapcar (lambda (path)
+  (mapcar (lambda (path)
             (cons (org-projectile-category-from-project-root
                    path) path)) projectile-known-projects))
 
@@ -153,24 +154,26 @@
 (cl-defmethod occ-get-todo-files ((_ org-projectile-per-project-strategy))
   (mapcar 'org-projectile-get-project-todo-file projectile-known-projects))
 
-(cl-defmethod occ-get-capture-file ((s org-projectile-per-project-strategy) category)
+(cl-defmethod occ-get-capture-file
+    ((s org-projectile-per-project-strategy) category)
   (let ((project-root
          (cdr (assoc category
-                (org-projectile-category-to-project-path s)))))
+                     (org-projectile-category-to-project-path s)))))
     (org-projectile-get-project-todo-file project-root)))
 
 (cl-defmethod occ-get-capture-marker
-  ((strategy org-projectile-per-project-strategy) context)
+    ((strategy org-projectile-per-project-strategy) context)
   (with-slots (category) context
     (let ((filepath (occ-get-capture-file strategy category)))
       (with-current-buffer (find-file-noselect filepath)
         (point-max-marker)))))
 
-(cl-defmethod occ-target-entry-p ((_ org-projectile-per-project-strategy) _context)
+(cl-defmethod occ-target-entry-p
+    ((_ org-projectile-per-project-strategy) _context)
   nil)
 
 (cl-defmethod org-projectile-category-to-project-path
-  ((_ org-projectile-per-project-strategy))
+    ((_ org-projectile-per-project-strategy))
   (mapcar (lambda (path)
             (cons (org-projectile-get-category-from-project-todo-file
                    path) path)) projectile-known-projects))
@@ -184,10 +187,11 @@
 (defclass org-projectile-top-level-heading-files-strategy nil nil)
 
 (cl-defmethod org-projectile-category-to-project-path
-  ((_s org-projectile-top-level-heading-files-strategy))
+    ((_s org-projectile-top-level-heading-files-strategy))
   (org-projectile-default-project-categories))
 
-(cl-defmethod occ-get-categories ((_s org-projectile-top-level-heading-files-strategy))
+(cl-defmethod occ-get-categories
+    ((_s org-projectile-top-level-heading-files-strategy))
   (cl-remove-if
    'null
    (delete-dups
@@ -223,7 +227,7 @@
   org-projectile-projects-file)
 
 (cl-defmethod occ-get-capture-marker
-  ((strategy org-projectile-single-file-strategy) context)
+    ((strategy org-projectile-single-file-strategy) context)
   (with-slots (category) context
     (let ((filepath (occ-get-capture-file strategy category)))
       (with-current-buffer (find-file-noselect filepath)
@@ -240,7 +244,7 @@
   t)
 
 (cl-defmethod org-projectile-category-to-project-path
-  ((_ org-projectile-single-file-strategy))
+    ((_ org-projectile-single-file-strategy))
   (mapcar (lambda (path)
             (cons (org-projectile-category-from-project-root
                    path) path)) projectile-known-projects))
@@ -248,7 +252,7 @@
 
 
 (setq org-projectile-strategy
-  (make-instance 'org-projectile-single-file-strategy))
+      (make-instance 'org-projectile-single-file-strategy))
 
 (cl-defun org-projectile-project-todo-entry
     (&rest additional-options &key (capture-character "p")
@@ -268,12 +272,13 @@
                          ,capture-template ,@additional-options)))
 
 (defun org-projectile-get-marker-for-category (category)
-  (occ-get-capture-marker org-projectile-strategy
-                          (make-instance 'occ-context
-                                         :category category
-                                         :options nil
-                                         :strategy org-projectile-strategy
-                                         :template org-projectile-capture-template)))
+  (occ-get-capture-marker
+   org-projectile-strategy
+   (make-instance 'occ-context
+                  :category category
+                  :options nil
+                  :strategy org-projectile-strategy
+                  :template org-projectile-capture-template)))
 
 (defun org-projectile-todo-files ()
   (occ-get-todo-files org-projectile-strategy))
@@ -292,7 +297,8 @@ were part of the capture template definition."
                   :category (projectile-completing-read
                              "Record TODO for project: "
                              (occ-get-categories org-projectile-strategy))
-                  :template (or capture-template org-projectile-capture-template)
+                  :template (or capture-template
+                                org-projectile-capture-template)
                   :strategy org-projectile-strategy
                   :options additional-options)))
 
@@ -310,10 +316,12 @@ were part of the capture template definition."
         (occ-capture
          (make-instance 'occ-context
                         :category project-name
-                        :template (or capture-template org-projectile-capture-template)
+                        :template (or capture-template
+                                      org-projectile-capture-template)
                         :options additional-options
                         :strategy org-projectile-strategy))
-      (error (format "%s is not a recognized projectile project." project-name)))))
+      (error (format "%s is not a recognized projectile project."
+                     project-name)))))
 
 (provide 'org-projectile)
 ;;; org-projectile.el ends here
