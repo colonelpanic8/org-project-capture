@@ -64,6 +64,7 @@
 
 If ARG is provided use `org-projectile-linked-capture-template'
 as the capture template."
+  (interactive "P")
   (helm :sources
 	(list (helm-source-org-capture-templates)
 	  (org-projectile-helm-source

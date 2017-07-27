@@ -1,12 +1,12 @@
 ;;; org-projectile.el --- Repository todo management for org-mode -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2014-2016 Ivan Malison
+;; Copyright (C) 2014-2017 Ivan Malison
 
 ;; Author: Ivan Malison <IvanMalison@gmail.com>
 ;; Keywords: org-mode projectile todo tools outlines
 ;; URL: https://github.com/IvanMalison/org-projectile
 ;; Version: 0.2.6
-;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "25"))
+;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "25") (s "1.9.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@
 (require 'org)
 (require 'org-category-capture)
 (require 'projectile)
+(require 's)
 
 (defgroup org-projectile ()
   "Customizations for org-projectile."
