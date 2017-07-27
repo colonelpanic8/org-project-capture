@@ -1,6 +1,12 @@
-;;; org-category-capture.el --- Tools for the contextual capture of org-mode TODOs. -*- lexical-binding: t; -*-
+;;; org-category-capture.el --- Contextualy capture of org-mode TODOs. -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2016 Ivan Malison
+
+;; Author: Ivan Malison <IvanMalison@gmail.com>
+;; Keywords: org-mode todo tools outlines
+;; URL: https://github.com/IvanMalison/org-projectile
+;; Version: 0.0.0
+;; Package-Requires: ((org "9.0.0") (emacs "24"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -31,8 +37,6 @@
 (cl-defmethod occ-get-categories ((_ occ-strategy)))
 
 (cl-defmethod occ-get-todo-files ((_ occ-strategy)))
-
-(cl-defmethod occ-get-capture-file ((_ occ-strategy) _category))
 
 (cl-defmethod occ-get-capture-marker ((_ occ-strategy) _context)
   "Return a marker that corresponds to the capture location for CONTEXT.")
@@ -97,20 +101,19 @@
   (occ-get-capture-marker (oref context strategy) context))
 
 (cl-defun occ-goto-category-heading
-    (category &key (transformers '(identity)) (level 1)
-              (min (point-min)) (max (point-max)) &allow-other-keys)
-  "Find a heading with text CATEGORY (optionally transformed by TRANSFORMERS).
-
-If LEVEL is non-nil only headings at that level will be traversed.
-If MIN is provided goto min before starting the search. The
-search will be bounded by MAX."
-  (or (cl-loop for fn in transformers
-               do (goto-char min)
-               for result = (occ-find-heading-at-level
-                             (funcall fn category) level max)
-               when result return result)
-      ;; Go back to the original point if we find nothing
-      (progn (goto-char min) nil)))
+    (category &rest args &key do-tree &allow-other-keys)
+  "Find a heading with text or category CATEGORY."
+  (let (result)
+    (org-map-entries
+     (lambda ()
+       (when (and (not result)
+                  (equal (apply 'occ-get-heading-category args) category))
+         (setq result (point))))
+     nil (when do-tree 'tree)
+     (1+ (org-current-level))
+     (occ-level-filter (if do-tree (1+ (org-current-level)) 1)))
+    (when result
+        (goto-char result) t)))
 
 (defun occ-find-heading-at-level (heading level max)
   (let ((regexp (format org-complex-heading-regexp-format heading)))
@@ -137,7 +140,7 @@ BUILD-HEADING will be applied to category to create the heading
 text. INSERT-HEADING-FN is the function that will be used to
 create the new bullet for the category heading. This function is
 tuned so that by default it looks and creates top level headings."
-  (unless (apply 'occ-goto-category-heading category args)
+  (unless (save-excursion (apply 'occ-goto-category-heading category args))
     (funcall insert-heading-fn)
     (org-set-property "CATEGORY" category)
     (insert (funcall build-heading category))))
@@ -167,17 +170,27 @@ current heading."
     (unless (equal (org-current-level) level)
       (point))))
 
-(cl-defun occ-get-value-by-category-from-filepath
-    (filepath &key goto-subtree property-fn)
+(defun occ-get-value-by-category-from-filepath (filepath &rest args)
   (with-current-buffer (find-file-noselect filepath)
-    (org-refresh-category-properties)
-    (when goto-subtree (funcall goto-subtree))
-    (org-map-entries (lambda () (cons (org-get-category)
-                                      (when property-fn (funcall property-fn))))
-                     nil (when goto-subtree 'tree)
-                     (occ-level-filter (if goto-subtree
-                                           (1+ (org-current-level))
-                                         1)))))
+    (apply 'occ-get-value-by-category args)))
+
+(cl-defun occ-get-heading-category
+    (&key (get-category-from-element 'org-get-heading) &allow-other-keys)
+  (let ((element-end (plist-get (cadr (org-element-at-point)) :end)))
+    (if (save-excursion
+          (re-search-forward (org-re-property "CATEGORY") element-end t))
+        (org-get-category)
+      (funcall get-category-from-element))))
+
+(cl-defun occ-get-value-by-category (&key goto-subtree property-fn)
+  (org-refresh-category-properties)
+  (when goto-subtree (funcall goto-subtree))
+  (org-map-entries
+   (lambda ()
+     (cons (occ-get-heading-category)
+           (when property-fn (funcall property-fn))))
+   nil (when goto-subtree 'tree)
+   (occ-level-filter (if goto-subtree (1+ (org-current-level)) 1))))
 
 (defun occ-get-property-by-category-from-filepath (filepath property &rest args)
   (apply 'occ-get-value-by-category-from-filepath filepath

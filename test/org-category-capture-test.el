@@ -1,0 +1,106 @@
+;;; org-category-capture-test.el --- org-category-capture test suite -*- lexical-binding: t; -*-
+
+;; Copyright (C) 2015-2016 Ivan Malison
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; The unit test suite of org-projectile
+
+;;; Code:
+
+(require 'ert)
+(require 'noflet)
+(require 'dash)
+
+(require 'org-category-capture)
+
+(defun equal-as-sets (seq1 seq2)
+  (and
+   (-all? (lambda (element) (member element seq2)) seq1)
+   (-all? (lambda (element) (member element seq1)) seq2)))
+
+(ert-deftest test-occ-get-value-by-category-handles-missing-categories ()
+  (with-temp-buffer
+    (org-mode)
+    (insert "
+* proj2
+** TODO do my thing
+** TODO cool
+* proj1
+* proj3
+* emacs
+  :PROPERTIES:
+  :CATEGORY: proj4
+  :END:
+") (should (equal-as-sets (mapcar 'car (occ-get-value-by-category))
+                          '("proj1" "proj2" "proj3" "proj4")))))
+
+(defclass occ-test-strategy (occ-strategy) nil)
+
+(cl-defmethod occ-get-capture-marker ((_ occ-test-strategy) context)
+  (with-slots (category) context
+    (occ-goto-or-insert-category-heading category)
+    (point-marker)))
+
+(cl-defmethod occ-target-entry-p ((_ occ-test-strategy) context) t)
+
+(defun occ-do-test-capture (category)
+  (occ-capture
+   (make-instance 'occ-context :category category :options nil :strategy
+                  (make-instance 'occ-test-strategy) :template "* TODO %?\n")))
+
+(defun occ-mock-place-template (&rest args)
+  (goto-char (org-capture-get :pos))
+  (setq-local outline-level 'org-outline-level)
+  (pcase (org-capture-get :type)
+    ((or `nil `entry) (org-capture-place-entry))
+    (`table-line (org-capture-place-table-line))
+    (`plain (org-capture-place-plain-text))
+    (`item (org-capture-place-item))
+    (`checkitem (org-capture-place-item))))
+
+(ert-deftest test-insert-todo ()
+  (with-temp-buffer
+    (org-mode)
+    (insert "
+* someproj
+* anotherproj
+  :PROPERTIES:
+  :CATEGORY: actualcategory
+  :END:
+") (noflet ((org-capture-place-template (&rest args)
+                                        (occ-mock-place-template))
+            (org-capture-narrow (&rest args)
+                                nil))
+     (occ-do-test-capture "actualcategory")
+     (occ-do-test-capture "anotherproj")
+     (should
+      (equal (buffer-string) "
+* someproj
+* anotherproj
+  :PROPERTIES:
+  :CATEGORY: actualcategory
+  :END:
+** TODO 
+* anotherproj
+  :PROPERTIES:
+  :CATEGORY: anotherproj
+  :END:
+** TODO 
+")))))
+
+(provide 'org-category-capture-test)
+;;; org-category-capture-test.el ends here
