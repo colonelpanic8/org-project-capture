@@ -22,5 +22,5 @@ recompile: clean-elc compile
 clean: clean-elc
 	rm -rf .cask/
 
-test: $(OBJECTS)
+test: recompile
 	cask exec ert-runner -L $(PWD)
