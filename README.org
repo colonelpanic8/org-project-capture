@@ -70,4 +70,4 @@ Both of these functions will create the relevant top level heading in the [[http
 to your configuration.
 * Customization
 ** Author's Configuration
-The author's configuration can be found [[https://github.com/IvanMalison/dotfiles/tree/master/dotfiles/emacs.d#org-projectile][here]]. Check it out for some ideas about how to customize org-projectile.
+The author's configuration can be found [[http://ivanmalison.github.io/dotfiles/#orgprojectile][here]]. Check it out for some ideas about how to customize org-projectile.
