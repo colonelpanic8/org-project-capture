@@ -5,22 +5,22 @@
 [[http://stable.melpa.org/#/org-projectile][file:http://stable.melpa.org/packages/org-projectile-badge.svg]]
 
 org-projectile provides functions for the creation of [[http://orgmode.org/][org-mode]] TODOs that are associated with [[https://github.com/bbatsov/projectile][projectile]] projects.
-
+* Breaking Changes
+org-projectile was recently refactored aggresively, and as a result, its interface has changed in ways that are backwards incompatible. I apologize for any inconvenience.
 * Installation
 
 Install from MELPA with ~M-x package-install org-projectile~. See the [[https://github.com/milkypostman/melpa][melpa repository]] for details about how to set up MELPA if you have not already done so.
-
 * Setup
-Before using org-projectile, you must specify the file you would like to use for storing project TODOs, as well a keybinding for taking a project note with org-capture and a global keybinding for ~org-projectile:project-todo-completing-read~. It is recommended that you start with the following configuration:
+Before using org-projectile, you must specify the file you would like to use for storing project TODOs, as well a keybinding for taking a project note with org-capture and a global keybinding for ~org-projectile-project-todo-completing-read~. It is recommended that you start with the following configuration:
 
 #+BEGIN_SRC emacs-lisp
   (require 'org-projectile)
-  (setq org-projectile:projects-file
+  (setq org-projectile-projects-file
         "/your/path/to/an/org/file/for/storing/project/todos.org")
-  (add-to-list 'org-capture-templates (org-projectile:project-todo-entry))
-  (setq org-agenda-files (append org-agenda-files (org-projectile:todo-files)))
+  (push (org-projectile-project-todo-entry) org-capture-templates)
+  (setq org-agenda-files (append org-agenda-files (org-projectile-todo-files)))
   (global-set-key (kbd "C-c c") 'org-capture)
-  (global-set-key (kbd "C-c n p") 'org-projectile:project-todo-completing-read)
+  (global-set-key (kbd "C-c n p") 'org-projectile-project-todo-completing-read)
 #+END_SRC
 
 ** use-package
@@ -28,52 +28,38 @@ Here is the same configuration expressed using jwiegley's excellent [[https://gi
 
 #+BEGIN_SRC emacs-lisp
   (use-package org-projectile
-    :bind (("C-c n p" . org-projectile:project-todo-completing-read)
+    :bind (("C-c n p" . org-projectile-project-todo-completing-read)
            ("C-c c" . org-capture))
     :config
     (progn
-      (setq org-projectile:projects-file 
+      (setq org-projectile-projects-file
             "/your/path/to/an/org/file/for/storing/projects.org")
-      (setq org-agenda-files (append org-agenda-files (org-projectile:todo-files)))
-      (add-to-list 'org-capture-templates (org-projectile:project-todo-entry "p")))
+      (setq org-agenda-files (append org-agenda-files (org-projectile-todo-files)))
+      (push (org-projectile-project-todo-entry) org-capture-templates))
     :ensure t)
 #+END_SRC
-
 ** per-repo todo files
 If you would prefer to have an org file for each project that resides in the project directory, add the following elisp to your configuration:
 
 #+BEGIN_SRC emacs-lisp
   (require 'org-projectile)
-  (org-projectile:per-repo)
-  (setq org-projectile:per-repo-filename "my_project_todo_filename.org")
-  (setq org-agenda-files (append org-agenda-files (org-projectile:todo-files)))
+  (org-projectile-per-repo)
+  (setq org-projectile-per-project-filepath "my_project_todo_filename.org")
+  (setq org-agenda-files (append org-agenda-files (org-projectile-todo-files)))
   (global-set-key (kbd "C-c c") 'org-capture)
-  (global-set-key (kbd "C-c n p") 'org-projectile:project-todo-completing-read)
+  (global-set-key (kbd "C-c n p") 'org-projectile-project-todo-completing-read)
 #+END_SRC
-
-** prompt-mode
-If you would like to be prompted for the org file that should be used to store tasks for any project for which such a file has not already been selected, you can use org-projectile's prompt mode. What follows is a minimal configuration with this mode enabled:
-
-#+BEGIN_SRC emacs-lisp
-  (require 'org-projectile)
-  (org-projectile:prompt)
-  (setq org-agenda-files (append org-agenda-files (org-projectile:todo-files)))
-  (global-set-key (kbd "C-c c") 'org-capture)
-  (global-set-key (kbd "C-c n p") 'org-projectile:project-todo-completing-read)
-#+END_SRC
-
 * Usage
-** ~org-projectile:project-todo-completing-read~
-   opens a projectile-completing-read that allows the selection of a project heading under which to store the input that is subsequently captured in an ~org-capture~ buffer. Completion candidates for this function are generated using the project list returned from ~(projectile-relevant-known-projects)~ and the existing headings in ~org-projectile:projects-file~.
+** ~org-projectile-project-todo-completing-read~
+opens a ~projectile-completing-read~ that allows the selection of a project
+heading under which to store the input that is subsequently captured in an
+~org-capture~ buffer. Completion candidates for this function are generated
+using the project list returned from ~(projectile-relevant-known-projects)~ and
+the existing headings in ~org-projectile-projects-file~.
+** ~org-projectile-project-todo-entry~
+is a function that builds an entry that can be added to ~org-capture-templates~ in order to use org-capture to make TODOs for the project to which the current buffer belongs. You can access org-capture mode with ~M-x org-capture~, but it is recommended that you bind org-capture to some key.
 
-** ~org-projectile:template-or-project~
-   is identical to ~org-projectile:project-todo-completing-read~ except that it uses helm directly, and it will also complete existing ~org-capture-templates~. helm is not included as a dependency in this project, so you MUST install it manually to use this function.
-
-** ~org-projectile:project-todo-entry~
-   is a function that builds an entry that can be added to ~org-capture-templates~ in order to use org-capture to make TODOs for the project to which the current buffer belongs. You can access org-capture mode with ~M-x org-capture~, but it is recommended that you bind org-capture to some key.
-
-Both of these functions will create the relevant top level heading in the [[http://orgmode.org/][org-mode]] file stored in ~org-projectile:projects-file~ if it does not exist.
-
+Both of these functions will create the relevant top level heading in the [[http://orgmode.org/][org-mode]] file stored in ~org-projectile-projects-file~ if it does not exist.
 ** Project headings are links
    This means that if you run ~org-open-at-point~ when your cursor is over a linked heading, ~projectile-switch-project-action~ will be executed, and you will begin working in the relevant project. By default, emacs will prompt you about whether not to execute the elisp associated with the link. To disable this prompt, add
 
@@ -83,42 +69,5 @@ Both of these functions will create the relevant top level heading in the [[http
 
 to your configuration.
 * Customization
-** capture templates
-Both ~org-projectile:project-todo-entry~ and ~org-projectile:project-todo-completing-read~ accept optional arguments that customize their behavior.
-*** Capture template key
-The first argument to ~org-projectile:project-todo-entry~ is the character that will trigger the produced entry from org-capture. If no argument is supplied, the default value of ~p~ will be used.
-
-*** Non-default capture template
-
-The second positional argument to ~org-projectile:project-todo-entry~ is the heading format that will be used. If no argument is supplied, the value of ~org-projectile:capture-template~ will be used as the capture template.
-
-The first argument to ~org-projectile:project-todo-completing-read~ does the same thing as the second argument to ~org-projectile:project-todo-entry~.
-
-Here is an example of how to use a custom capture template in conjunction with ~org-projectile:project-todo-entry~:
-
-#+BEGIN_SRC emacs-lisp
-(add-to-list 'org-capture-templates 
-  (org-projectile:project-todo-entry "l" "* TODO %? %a\n" "Linked Project TODO"))
-#+END_SRC
-
-In addition to going to the appropriate heading in your projects todo file, this capture template will automatically link to the line at which the cursor was situated when org-capture was invoked.
-
-If you wish to use this type of functionality with ~org-projectile:project-todo-completing-read~, but only when it is explicitly requested, you might make it so that when call the function with a prefix argument, an alternative linking template is used:
-
-#+BEGIN_SRC emacs-lisp
-(defun imalison:project-todo-completing-read (&optional arg)
-  (interactive "P")
-  (org-projectile:project-todo-completing-read 
-    (if arg "* TODO %? %a\n" nil)))
-#+END_SRC
-
-** Custom TODO location storage specification
-The variables 
-~org-projectile:project-name-to-org-file~
-~org-projectile:project-name-to-location-one-file~
- allow the customization of file/heading selection for TODO storage.
-
-As an example of what is possible with these functions, take a look at
-~org-projectile:project-name-to-org-file-hybrid~.
 ** Author's Configuration
 The author's configuration can be found [[https://github.com/IvanMalison/dotfiles/tree/master/dotfiles/emacs.d#org-projectile][here]]. Check it out for some ideas about how to customize org-projectile.
