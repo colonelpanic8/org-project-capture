@@ -299,6 +299,18 @@
   (occ-get-todo-files org-projectile-strategy))
 
 ;;;###autoload
+(defun org-projectile-single-file ()
+  (interactive)
+  (setq org-projectile-strategy
+        (make-instance 'org-projectile-single-file-strategy)))
+
+;;;###autoload
+(defun org-projectile-per-project ()
+  (interactive)
+  (setq org-projectile-strategy
+        (make-instance 'org-projectile-per-project-strategy)))
+
+;;;###autoload
 (defun org-projectile-project-todo-completing-read
     (&optional capture-template &rest additional-options)
   "Select a project using a `projectile-completing-read' and record a TODO.
