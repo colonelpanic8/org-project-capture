@@ -43,7 +43,7 @@ If you would prefer to have an org file for each project that resides in the pro
 
 #+BEGIN_SRC emacs-lisp
   (require 'org-projectile)
-  (org-projectile-per-repo)
+  (org-projectile-per-project)
   (setq org-projectile-per-project-filepath "my_project_todo_filename.org")
   (setq org-agenda-files (append org-agenda-files (org-projectile-todo-files)))
   (global-set-key (kbd "C-c c") 'org-capture)
