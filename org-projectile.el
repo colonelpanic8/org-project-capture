@@ -269,6 +269,9 @@
 (setq org-projectile-strategy
       (make-instance 'org-projectile-single-file-strategy))
 
+(defun org-projectile-location-for-project (project)
+  (org-projectile-category-to-project-path org-projectile-strategy project))
+
 (cl-defun org-projectile-project-todo-entry
     (&rest additional-options &key (capture-character "p")
            (capture-template org-projectile-capture-template)
