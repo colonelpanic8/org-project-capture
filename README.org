@@ -6,7 +6,7 @@
 
 org-projectile provides functions for the creation of [[http://orgmode.org/][org-mode]] TODOs that are associated with [[https://github.com/bbatsov/projectile][projectile]] projects.
 * Breaking Changes
-org-projectile was recently refactored aggresively, and as a result, its interface has changed in ways that are backwards incompatible. I apologize for any inconvenience.
+org-projectile was recently refactored aggresively, and as a result, its interface has changed in ways that are backwards incompatible. I have also moved all helm integration into its own package, ~org-projectile-helm~. I apologize for any inconvenience.
 * Installation
 
 Install from MELPA with ~M-x package-install org-projectile~. See the [[https://github.com/milkypostman/melpa][melpa repository]] for details about how to set up MELPA if you have not already done so.
