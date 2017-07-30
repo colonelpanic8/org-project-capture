@@ -303,12 +303,14 @@
 
 ;;;###autoload
 (defun org-projectile-single-file ()
+  "Set `org-projectile-strategy' so that captures occur in a single file."
   (interactive)
   (setq org-projectile-strategy
         (make-instance 'org-projectile-single-file-strategy)))
 
 ;;;###autoload
 (defun org-projectile-per-project ()
+  "Set `org-projectile-strategy' so that captures occur within each project."
   (interactive)
   (setq org-projectile-strategy
         (make-instance 'org-projectile-per-project-strategy)))
