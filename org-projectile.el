@@ -6,7 +6,7 @@
 ;; Keywords: org-mode projectile todo tools outlines
 ;; URL: https://github.com/IvanMalison/org-projectile
 ;; Version: 0.2.6
-;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "25") (s "1.9.0") (org-category-capture "0.0.0"))
+;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "24") (s "1.9.0") (org-category-capture "0.0.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
