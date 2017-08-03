@@ -275,7 +275,7 @@
 (cl-defun org-projectile-project-todo-entry
     (&rest additional-options &key (capture-character "p")
            (capture-template org-projectile-capture-template)
-           (capture-heading "Project Todo"))
+           (capture-heading "Project Todo") &allow-other-keys)
   (let ((target-fn
          (lambda () (occ-capture-goto-marker
                      (make-instance 'occ-context
