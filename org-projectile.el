@@ -270,7 +270,9 @@
       (make-instance 'org-projectile-single-file-strategy))
 
 (defun org-projectile-location-for-project (project)
-  (org-projectile-category-to-project-path org-projectile-strategy project))
+  (cdr (assoc project
+              (org-projectile-category-to-project-path
+               org-projectile-strategy))))
 
 (cl-defun org-projectile-project-todo-entry
     (&rest additional-options &key (capture-character "p")
