@@ -304,6 +304,20 @@
   (occ-get-todo-files org-projectile-strategy))
 
 ;;;###autoload
+(defun org-projectile-goto-location-for-project (project)
+  (interactive
+   (list
+    (projectile-completing-read
+     "Select which project's TODOs you would like to go to."
+     (occ-get-categories org-projectile-strategy))))
+  (occ-capture-goto-marker
+   (make-instance 'occ-context
+                  :category project
+                  :template org-projectile-capture-template
+                  :strategy org-projectile-strategy
+                  :options nil)))
+
+;;;###autoload
 (defun org-projectile-single-file ()
   "Set `org-projectile-strategy' so that captures occur in a single file."
   (interactive)
