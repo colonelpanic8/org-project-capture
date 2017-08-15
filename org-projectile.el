@@ -155,7 +155,7 @@
       (org-projectile-category-from-project-root project-path))))
 
 (defun org-projectile-get-project-file-categories ()
-  (mapcar 'org-projectile-get-category-from-project-todo-file
+  (mapcar 'org-projectile-category-from-project-root
           projectile-known-projects))
 
 (defclass org-projectile-per-project-strategy nil nil)
@@ -187,7 +187,7 @@
 (cl-defmethod org-projectile-category-to-project-path
     ((_ org-projectile-per-project-strategy))
   (mapcar (lambda (path)
-            (cons (org-projectile-get-category-from-project-todo-file
+            (cons (org-projectile-category-from-project-root
                    path) path)) projectile-known-projects))
 
 
@@ -308,7 +308,7 @@
   (interactive
    (list
     (projectile-completing-read
-     "Select which project's TODOs you would like to go to."
+     "Select which project's TODOs you would like to go to:"
      (occ-get-categories org-projectile-strategy))))
   (occ-capture-goto-marker
    (make-instance 'occ-context
