@@ -107,16 +107,18 @@
     (category &rest args &key do-tree &allow-other-keys)
   "Find a heading with text or category CATEGORY."
   (save-excursion
-    (let (result)
-      (org-map-entries
-       (lambda ()
-         (when (and (not result)
-                    (equal (apply 'occ-get-heading-category args) category))
-           (setq result (point))))
-       nil (when do-tree 'tree)
-       (1+ (org-current-level))
-       (occ-level-filter (if do-tree (1+ (org-current-level)) 1)))
-      result)))
+    (if (equal major-mode 'org-mode)
+        (let (result)
+          (org-map-entries
+           (lambda ()
+             (when (and (not result)
+                        (equal (apply 'occ-get-heading-category args) category))
+               (setq result (point))))
+           nil (when do-tree 'tree)
+           (1+ (org-current-level))
+           (occ-level-filter (if do-tree (1+ (org-current-level)) 1)))
+          result)
+      (error "Can't get category heading in non org-mode file"))))
 
 (defun occ-insert-after-current-heading ()
   (org-end-of-line)
