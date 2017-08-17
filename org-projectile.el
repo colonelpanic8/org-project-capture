@@ -305,6 +305,7 @@
 
 ;;;###autoload
 (defun org-projectile-goto-location-for-project (project)
+  "Goto the location at which TODOs for PROJECT are stored."
   (interactive
    (list
     (projectile-completing-read
