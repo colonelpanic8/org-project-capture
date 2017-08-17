@@ -50,12 +50,12 @@
 
 (defclass occ-test-strategy (occ-strategy) nil)
 
-(cl-defmethod occ-get-capture-marker ((_ occ-test-strategy) context)
+(defmethod occ-get-capture-marker ((_ occ-test-strategy) context)
   (with-slots (category) context
     (occ-goto-or-insert-category-heading category)
     (point-marker)))
 
-(cl-defmethod occ-target-entry-p ((_ occ-test-strategy) context) t)
+(defmethod occ-target-entry-p ((_ occ-test-strategy) context) t)
 
 (defvar occ-test-text-to-insert "dummy-text")
 
