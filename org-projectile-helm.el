@@ -61,7 +61,7 @@
 
 ;;;###autoload
 (defun org-projectile-helm-template-or-project (&optional arg)
-  "Select a project or org capture template and record a TODO.
+  "Select a project or `org-capture' template and record a TODO.
 
 If ARG is provided use `org-projectile-linked-capture-template'
 as the capture template."
