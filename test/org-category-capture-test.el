@@ -76,6 +76,11 @@
     (`checkitem (org-capture-place-item)))
   (insert occ-test-text-to-insert))
 
+(ert-deftest test-get-heading-location-on-empty-file ()
+  (with-temp-buffer
+    (org-mode)
+    (occ-get-category-heading-location "test-category")))
+
 (ert-deftest test-insert-todo ()
   (with-temp-buffer
     (org-mode)
@@ -115,4 +120,4 @@
 ")))))
 
 (provide 'org-category-capture-test)
-;;; org-category-capture-test.el ends here
+;;; org-capture-test.el ends here

@@ -119,7 +119,7 @@
                         (equal (apply 'occ-get-heading-category args) category))
                (setq result (point))))
            nil (when do-tree 'tree)
-           (1+ (org-current-level))
+           (1+ (or (org-current-level) 0))
            (occ-level-filter (if do-tree (1+ (org-current-level)) 1)))
           result)
       (error "Can't get category heading in non org-mode file"))))
