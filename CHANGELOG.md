@@ -1,6 +1,6 @@
 # Change Log
 
-## [Unreleased](https://github.com/IvanMalison/org-projectile/tree/HEAD)
+## [v1.1.0](https://github.com/IvanMalison/org-projectile/tree/v1.1.0)
 
 [Full Changelog](https://github.com/IvanMalison/org-projectile/compare/v1.0.0...HEAD)
 
