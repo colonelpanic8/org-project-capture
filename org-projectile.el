@@ -222,9 +222,18 @@
     heading))
 
 (defclass org-projectile-single-file-strategy
-  (org-projectile-top-level-heading-files-strategy) nil)
+  (org-projectile-top-level-heading-files-strategy)
+  ((goto-subheading-fn :initarg :goto-subheading-fn :initform nil)))
 
-(defmethod occ-get-categories ((_s org-projectile-single-file-strategy))
+(defun org-projectile-single-file-heading-strategy (heading &rest args)
+  (apply 'make-instance 'org-projectile-single-file-strategy
+                 :goto-subheading-fn
+                 (lambda () (goto-char (org-find-exact-headline-in-buffer
+                                        heading (current-buffer) t))
+                   (end-of-line))
+                 args))
+
+(defmethod occ-get-categories ((strategy org-projectile-single-file-strategy))
   (cl-remove-if
    'null
    (delete-dups
@@ -232,7 +241,8 @@
      (org-projectile-get-categories-from-project-paths)
      (occ-get-categories-from-filepath
       org-projectile-projects-file
-      :get-category-from-element 'org-projectile-get-category-from-heading)))))
+      :get-category-from-element 'org-projectile-get-category-from-heading
+      :goto-subtree (oref strategy goto-subheading-fn))))))
 
 (defmethod occ-get-todo-files ((_ org-projectile-single-file-strategy))
   (list org-projectile-projects-file))
@@ -245,12 +255,21 @@
   (with-slots (category) context
     (let ((filepath (occ-get-capture-file strategy category)))
       (with-current-buffer (find-file-noselect filepath)
-        (save-excursion
-          (occ-goto-or-insert-category-heading
-           category
-           :build-heading 'org-projectile-build-heading
-           :get-category-from-element 'org-projectile-get-category-from-heading)
-          (point-marker))))))
+        (let ((goto-subheading (oref strategy goto-subheading-fn)))
+          (when goto-subheading
+            (funcall goto-subheading))
+          (save-excursion
+            (occ-goto-or-insert-category-heading
+             category
+             :build-heading 'org-projectile-build-heading
+             :get-category-from-element
+             'org-projectile-get-category-from-heading
+             :insert-heading-fn (if goto-subheading
+                                    (lambda () (funcall goto-subheading)
+                                      (occ-insert-at-end-of-subtree))
+                                  'occ-insert-at-end-of-file)
+             :do-tree goto-subheading)
+            (point-marker)))))))
 
 (defun org-projectile-linked-heading-regexp (heading)
   (format "\\[\\[.*?]\\[%s]]" heading))

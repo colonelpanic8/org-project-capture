@@ -41,5 +41,36 @@
                            '("proj1" "ideas2" "test" "proj4" "proj3"
                              "github-search")))))
 
+(ert-deftest test-org-projectile-goto-subheading ()
+  (let* ((org-projectile-strategy
+          (org-projectile-single-file-heading-strategy "projects subheading"))
+         (org-projectile-projects-file
+          (concat (file-name-as-directory (expand-file-name "test/"))
+                  "test_subheading_projects.org"))
+         (projectile-known-projects nil)
+         (org-projectile-force-linked nil)
+         (org-projectile-counts-in-heading nil))
+    (should (equal-as-sets (occ-get-categories org-projectile-strategy)
+                           (list "project1" "project3")))
+    (with-current-buffer
+        (find-file-noselect org-projectile-projects-file)
+      (occ-get-capture-marker
+       (make-instance 'occ-context :category "project2"
+                      :strategy org-projectile-strategy))
+      (should (equal (buffer-string) "
+* project1
+This isn't actually a project heading because it's not in the right subheading
+* project2
+* projects subheading
+** project1
+** project3
+** project2
+  :PROPERTIES:
+  :CATEGORY: project2
+  :END:
+* project3
+* project4
+")))))
+
 (provide 'org-projectile-test)
 ;;; org-projectile-test.el ends here

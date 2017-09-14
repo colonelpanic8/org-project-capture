@@ -126,7 +126,11 @@
 
 (defun occ-insert-after-current-heading ()
   (org-end-of-line)
-  (org-insert-heading t t t))
+  (org-insert-heading t t))
+
+(defun occ-insert-at-end-of-subtree ()
+  (org-end-of-subtree)
+  (org-insert-heading t t))
 
 (defun occ-insert-at-end-of-file ()
   (goto-char (point-max))
