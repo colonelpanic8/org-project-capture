@@ -56,11 +56,6 @@
   :type '(string)
   :group 'org-projectile)
 
-(defcustom org-projectile-linked-capture-template "* TODO %? %A\n"
-  "The default linked capture template to use for org-projectile TODOs."
-  :type '(string)
-  :group 'org-projectile)
-
 (defcustom org-projectile-force-linked t
   "Whether to make project category headings links to their projects."
   :type '(boolean)
@@ -333,8 +328,8 @@
         (make-instance 'org-projectile-per-project-strategy)))
 
 ;;;###autoload
-(defun org-projectile-project-todo-completing-read
-    (&optional capture-template &rest additional-options)
+(cl-defun org-projectile-project-todo-completing-read
+    (&rest additional-options &key capture-template)
   "Select a project using a `projectile-completing-read' and record a TODO.
 
 If CAPTURE-TEMPLATE is provided use it as the capture template
@@ -352,8 +347,8 @@ were part of the capture template definition."
                   :options additional-options)))
 
 ;;;###autoload
-(defun org-projectile-capture-for-current-project
-    (&optional capture-template &rest additional-options)
+(cl-defun org-projectile-capture-for-current-project
+    (&rest additional-options &key capture-template)
   "Capture a TODO for the current active projectile project.
 
 If CAPTURE-TEMPLATE is provided use it as the capture template
