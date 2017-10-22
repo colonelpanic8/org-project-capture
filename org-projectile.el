@@ -329,7 +329,7 @@
 
 ;;;###autoload
 (cl-defun org-projectile-project-todo-completing-read
-    (&rest additional-options &key capture-template)
+    (&rest additional-options &key capture-template &allow-other-keys)
   "Select a project using a `projectile-completing-read' and record a TODO.
 
 If CAPTURE-TEMPLATE is provided use it as the capture template
@@ -348,7 +348,7 @@ were part of the capture template definition."
 
 ;;;###autoload
 (cl-defun org-projectile-capture-for-current-project
-    (&rest additional-options &key capture-template)
+    (&rest additional-options &key capture-template &allow-other-keys)
   "Capture a TODO for the current active projectile project.
 
 If CAPTURE-TEMPLATE is provided use it as the capture template
