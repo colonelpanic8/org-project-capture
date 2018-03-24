@@ -5,38 +5,36 @@
 [[http://stable.melpa.org/#/org-projectile][file:http://stable.melpa.org/packages/org-projectile-badge.svg]]
 
 org-projectile provides functions for the creation of [[http://orgmode.org/][org-mode]] TODOs that are associated with [[https://github.com/bbatsov/projectile][projectile]] projects.
-* Breaking Changes
-org-projectile was recently refactored aggresively, and as a result, its interface has changed in ways that are backwards incompatible. I have also moved all helm integration into its own package, ~org-projectile-helm~. I apologize for any inconvenience.
 * Installation
 
 Install from MELPA with ~M-x package-install org-projectile~. See the [[https://github.com/milkypostman/melpa][melpa repository]] for details about how to set up MELPA if you have not already done so.
 * Setup
-Before using org-projectile, you must specify the file you would like to use for storing project TODOs, as well a keybinding for taking a project note with org-capture and a global keybinding for ~org-projectile-project-todo-completing-read~. It is recommended that you start with the following configuration:
+Before using org-projectile, you must specify the file you would like to use for storing project TODOs, as well as a keybinding for taking a project note with org-capture and a global keybinding for ~org-projectile-project-todo-completing-read~. It is recommended that you start with the following configuration:
 
 #+BEGIN_SRC emacs-lisp
-  (require 'org-projectile)
-  (setq org-projectile-projects-file
-        "/your/path/to/an/org/file/for/storing/project/todos.org")
-  (push (org-projectile-project-todo-entry) org-capture-templates)
-  (setq org-agenda-files (append org-agenda-files (org-projectile-todo-files)))
-  (global-set-key (kbd "C-c c") 'org-capture)
-  (global-set-key (kbd "C-c n p") 'org-projectile-project-todo-completing-read)
+(require 'org-projectile)
+(setq org-projectile-projects-file
+      "/your/path/to/an/org/file/for/storing/project/todos.org")
+(push (org-projectile-project-todo-entry) org-capture-templates)
+(setq org-agenda-files (append org-agenda-files (org-projectile-todo-files)))
+(global-set-key (kbd "C-c c") 'org-capture)
+(global-set-key (kbd "C-c n p") 'org-projectile-project-todo-completing-read)
 #+END_SRC
 
 ** use-package
 Here is the same configuration expressed using jwiegley's excellent [[https://github.com/jwiegley/use-package][use-package]]:
 
 #+BEGIN_SRC emacs-lisp
-  (use-package org-projectile
-    :bind (("C-c n p" . org-projectile-project-todo-completing-read)
-           ("C-c c" . org-capture))
-    :config
-    (progn
-      (setq org-projectile-projects-file
-            "/your/path/to/an/org/file/for/storing/projects.org")
-      (setq org-agenda-files (append org-agenda-files (org-projectile-todo-files)))
-      (push (org-projectile-project-todo-entry) org-capture-templates))
-    :ensure t)
+(use-package org-projectile
+  :bind (("C-c n p" . org-projectile-project-todo-completing-read)
+         ("C-c c" . org-capture))
+  :config
+  (progn
+    (setq org-projectile-projects-file
+          "/your/path/to/an/org/file/for/storing/projects.org")
+    (setq org-agenda-files (append org-agenda-files (org-projectile-todo-files)))
+    (push (org-projectile-project-todo-entry) org-capture-templates))
+  :ensure t)
 #+END_SRC
 ** per-repo todo files
 If you would prefer to have an org file for each project that resides in the project directory, add the following elisp to your configuration:
