@@ -41,5 +41,19 @@
                            '("proj1" "ideas2" "test" "proj4" "proj3"
                              "github-search")))))
 
+(ert-deftest org-projectile-per-project-filepath-with-function ()
+  (let ((org-projectile-strategy (make-instance 'org-projectile-per-project-strategy))
+        (projectile-known-projects '("/a" "/b"))
+        (org-projectile-per-project-filepath
+         (lambda (path)
+           (if (string-equal path "/a")
+               "OTHER.org"
+             "TODO.org"))))
+    (should (equal-as-sets (org-projectile-todo-files)
+                           '("/a/OTHER.org" "/b/TODO.org")))
+    (let ((org-projectile-per-project-filepath "COOL.org"))
+      (should (equal-as-sets (org-projectile-todo-files)
+                           '("/a/COOL.org" "/b/COOL.org"))))))
+
 (provide 'org-projectile-test)
 ;;; org-projectile-test.el ends here

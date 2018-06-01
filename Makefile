@@ -10,7 +10,7 @@ EMACS = $(shell sh -c 'evm bin')
 	$(CASK) install
 
 $(OBJECTS): .cask
-	$(CASK) build
+	$(CASK) build --verbose
 
 compile: $(OBJECTS)
 
