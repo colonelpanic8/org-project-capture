@@ -48,8 +48,9 @@
 
 (defun org-projectile-helm-source (&optional capture-template)
   (helm-build-sync-source "Org Capture Options:"
-    :candidates (cl-loop for project in (occ-get-categories org-projectile-strategy)
-                  collect (cons project project))
+    :candidates (cl-loop for project in
+                         (occ-get-categories org-projectile-strategy) collect
+                         (cons project project))
     :action `(("Do capture" .
                 ,(lambda (project)
                    (occ-capture
@@ -60,16 +61,16 @@
                        :strategy org-projectile-strategy)))))))
 
 ;;;###autoload
-(defun org-projectile-helm-template-or-project (&optional arg)
+(defun org-projectile-helm-template-or-project
+    (&optional capture-template-for-project)
   "Select a project or `org-capture' template and record a TODO.
 
-If ARG is provided use `org-projectile-linked-capture-template'
-as the capture template."
+If provided, CAPTURE-TEMPLATE-FOR-PROJECT will be the capture
+template used for project TODO capture."
   (interactive "P")
   (helm :sources
 	(list (helm-source-org-capture-templates)
-	  (org-projectile-helm-source
-		(if arg org-projectile-linked-capture-template nil)))
+	  (org-projectile-helm-source capture-template-for-project))
 	:candidate-number-limit 99999
 	:buffer "*helm org capture templates*"))
 
