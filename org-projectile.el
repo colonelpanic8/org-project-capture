@@ -46,10 +46,18 @@
   :type '(string)
   :group 'org-projectile)
 
+(defcustom org-projectile-projects-directory nil
+  "Directory to store per-project `org-projectile' TODOs. If non-nil, it
+would serve as a root directory for storing project specific TODOs.
+Otherwise, `org-projectile-per-project-filepath' would be used to build a
+filename related to project root."
+  :type '(string)
+  :group 'org-projectile)
+
 (defcustom org-projectile-per-project-filepath "TODO.org"
-  "The path (relative to the project) where todos will be stored.
-Alternatively you may provide a function that will compute this
-path."
+  "The path (relative to the project or `org-projectile-projects-directory')
+where todos will be stored. Alternatively you may provide a function that will
+compute this path."
   :type '(choice string function)
   :group 'org-projectile)
 
@@ -139,12 +147,15 @@ path."
 ;; One file per project strategy
 
 (defun org-projectile-get-project-todo-file (project-path)
-  (let ((relative-filepath
+  (let ((project-todos-filepath
          (if (stringp org-projectile-per-project-filepath)
              org-projectile-per-project-filepath
-           (funcall org-projectile-per-project-filepath project-path))))
-    (concat
-     (file-name-as-directory project-path) relative-filepath)))
+           (funcall org-projectile-per-project-filepath project-path)))
+        (org-projectile-directory
+         (if org-projectile-projects-directory
+             org-projectile-projects-directory
+           (file-name-as-directory project-path))))
+    (concat org-projectile-directory project-todos-filepath)))
 
 (defun org-projectile-get-category-from-project-todo-file (project-path)
   (let ((todo-filepath (org-projectile-get-project-todo-file project-path)))
