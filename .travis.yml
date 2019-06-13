@@ -3,7 +3,7 @@ env:
   matrix:
     - EVMVERSION=emacs-26.1-travis
     - EVMVERSION=emacs-25.3-travis
-    - EVMVERSION=emacs-24.5-travis
+    # - EVMVERSION=emacs-24.5-travis
 before_install:
   - source travis-evm-cask.sh
 install:
