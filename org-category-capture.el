@@ -98,11 +98,11 @@
        (list 'function (lambda ()
                          (occ-capture-goto-marker context))))
       (org-capture-put :target-entry-p (occ-target-entry-p strategy context))
-      (org-capture-place-template))))
+      (org-capture-place-template 't))))
 
 (defun occ-capture-goto-marker (context)
   (let ((marker (occ-get-capture-marker context)))
-    (switch-to-buffer (marker-buffer marker))
+    (set-buffer (marker-buffer marker))
     (goto-char (marker-position marker))))
 
 (defmethod occ-get-capture-marker ((context occ-context))
