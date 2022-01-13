@@ -1,6 +1,5 @@
 (source gnu)
 (source melpa)
-(source org)
 
 (package-file "org-projectile.el")
 (package-file "org-category-capture.el")
