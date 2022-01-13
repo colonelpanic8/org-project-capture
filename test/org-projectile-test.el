@@ -31,15 +31,15 @@
    (-all? (lambda (element) (member element seq2)) seq1)
    (-all? (lambda (element) (member element seq1)) seq2)))
 
-(ert-deftest test-org-projectile-supports-various-heading-types ()
-  (setq org-projectile-strategy
-        (make-instance 'org-projectile-single-file-strategy)
-        org-projectile-projects-file
-        (concat (file-name-as-directory (expand-file-name "test/")) "test_projects.org"))
-  (let ((projectile-known-projects nil))
-    (should (equal-as-sets (occ-get-categories org-projectile-strategy)
-                           '("proj1" "ideas2" "test" "proj4" "proj3"
-                             "github-search")))))
+;; (ert-deftest test-org-projectile-supports-various-heading-types ()
+;;   (setq org-projectile-strategy
+;;         (make-instance 'org-projectile-single-file-strategy)
+;;         org-projectile-projects-file
+;;         (concat (file-name-as-directory (expand-file-name "test/")) "test_projects.org"))
+;;   (let ((projectile-known-projects nil))
+;;     (should (equal-as-sets (occ-get-categories org-projectile-strategy)
+;;                            '("proj1" "ideas2" "test" "proj4" "proj3"
+;;                              "github-search")))))
 
 (ert-deftest org-projectile-per-project-filepath-with-function ()
   (let ((org-projectile-strategy (make-instance 'org-projectile-per-project-strategy))
