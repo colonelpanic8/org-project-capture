@@ -26,6 +26,7 @@
 (require 'dash)
 
 (require 'org-category-capture)
+(setq org-adapt-indentation 1)
 
 (defun equal-as-sets (seq1 seq2)
   (and
