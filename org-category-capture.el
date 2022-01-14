@@ -37,14 +37,14 @@
 
 (defclass occ-strategy nil nil)
 
-(defmethod occ-get-categories ((_ occ-strategy)))
+(cl-defmethod occ-get-categories ((_ occ-strategy)))
 
-(defmethod occ-get-todo-files ((_ occ-strategy)))
+(cl-defmethod occ-get-todo-files ((_ occ-strategy)))
 
-(defmethod occ-get-capture-marker ((_ occ-strategy) _context)
+(cl-defmethod occ-get-capture-marker ((_ occ-strategy) _context)
   "Return a marker that corresponds to the capture location for CONTEXT.")
 
-(defmethod occ-target-entry-p ((_ occ-strategy) _context))
+(cl-defmethod occ-target-entry-p ((_ occ-strategy) _context))
 
 (defclass occ-context ()
   ((category :initarg :category)
@@ -52,8 +52,7 @@
    (options :initarg :options)
    (strategy :initarg :strategy)))
 
-;; This is needed becaused cl-defmethod doesn't exist in emacs24
-(cl-defun occ-build-capture-template-emacs-24-hack
+(cl-defmethod occ-build-capture-template
     (context &key (character "p") (heading "Category TODO"))
   (with-slots (template options strategy) context
     (apply 'list character heading 'entry
@@ -61,10 +60,7 @@
                  (apply-partially 'occ-get-capture-location strategy context))
            template options)))
 
-(defmethod occ-build-capture-template ((context occ-context) &rest args)
-  (apply 'occ-build-capture-template-emacs-24-hack context args))
-
-(defmethod occ-capture ((context occ-context))
+(cl-defmethod occ-capture ((context occ-context))
   (with-slots (category template options strategy)
       context
     (org-capture-set-plist (occ-build-capture-template context))
@@ -105,7 +101,7 @@
     (switch-to-buffer (marker-buffer marker))
     (goto-char (marker-position marker))))
 
-(defmethod occ-get-capture-marker ((context occ-context))
+(cl-defmethod occ-get-capture-marker ((context occ-context))
   (occ-get-capture-marker (oref context strategy) context))
 
 (cl-defun occ-get-category-heading-location
