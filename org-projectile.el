@@ -228,15 +228,6 @@ compute this path."
     ((_s org-projectile-single-file-strategy))
   (org-projectile-default-project-categories))
 
-(cl-defmethod occ-get-categories
-    ((_s org-projectile-single-file-strategy))
-  (cl-remove-if
-   'null
-   (delete-dups
-    (nconc
-     (org-projectile-get-categories-from-project-paths)
-     (occ-get-categories-from-filepath org-projectile-projects-file)))))
-
 (cl-defmethod occ-get-categories ((_s org-projectile-single-file-strategy))
   (cl-remove-if
    'null
