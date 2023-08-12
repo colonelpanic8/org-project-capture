@@ -136,11 +136,10 @@ compute this path."
   (let* ((heading (org-get-heading))
          (no-links
           (replace-regexp-in-string
-           org-bracket-link-analytic-regexp
+           org-link-bracket-re
            (lambda (m)
-             (if (match-end 5) (match-string 5 m)
-               (concat (match-string 1 m) (match-string 3 m))))
-           heading nil t)))
+             (if (match-end 2) (match-string 2 m)
+               (concat (match-string 2 m)))) heading nil t)))
     (s-trim (replace-regexp-in-string "\[[0-9]*/[0-9]*\]" "" no-links))))
 
 

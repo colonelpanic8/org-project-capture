@@ -2,7 +2,7 @@ CASK = cask
 
 SRCS = $(shell find .  -maxdepth 1 -name '*.el')
 OBJECTS = $(SRCS:.el=.elc)
-EMACS = $(shell sh -c 'evm bin')
+EMACS = $(shell which emacs)
 
 .PHONY: test compile recompile clean install
 
