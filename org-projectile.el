@@ -1,6 +1,6 @@
 ;;; org-projectile.el --- Repository todo management for org-mode -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2014-2017 Ivan Malison
+;; Copyright (C) 2014-2023 Ivan Malison
 
 ;; Author: Ivan Malison <IvanMalison@gmail.com>
 ;; Keywords: org-mode projectile todo tools outlines
