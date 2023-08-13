@@ -35,9 +35,12 @@
 ;; XXX: dired-buffers is used below
 (require 'dired)
 
-(defclass occ-strategy nil nil)
+(defclass occ-strategy nil nil :abstract t)
 
 (cl-defmethod occ-get-categories ((_ occ-strategy)))
+
+(cl-defmethod occ-get-existing-categories ((strategy occ-strategy))
+  (occ-get-categories strategy))
 
 (cl-defmethod occ-get-todo-files ((_ occ-strategy)))
 

@@ -118,7 +118,7 @@ compute this path."
 
 (defun org-projectile-open-project (name)
   (let* ((name-to-location
-          (org-projectile-category-to-project-path org-projectile-strategy))
+          (org-projectile-build-category-to-project-path org-projectile-strategy))
          (entry (assoc name name-to-location)))
     (when entry
       (projectile-switch-project-by-name (cdr entry)))))
@@ -141,6 +141,20 @@ compute this path."
              (if (match-end 2) (match-string 2 m)
                (concat (match-string 2 m)))) heading nil t)))
     (s-trim (replace-regexp-in-string "\[[0-9]*/[0-9]*\]" "" no-links))))
+
+(defun org-projectile--build-category-to-project-path ()
+    (mapcar (lambda (path)
+              (cons (org-projectile-category-from-project-root
+                     path) path)) projectile-known-projects))
+
+
+;; Base
+
+(defclass org-projectile-base-strategy (occ-strategy)
+  nil :abstract t)
+
+(cl-defmethod org-projectile-build-category-to-project-path ((_ org-projectile-base-strategy))
+  (org-projectile--build-category-to-project-path))
 
 
 ;; One file per project strategy
@@ -169,19 +183,26 @@ compute this path."
   (mapcar 'org-projectile-category-from-project-root
           projectile-known-projects))
 
-(defclass org-projectile-per-project-strategy nil nil)
+(defclass org-projectile-per-project-strategy (org-projectile-base-strategy) nil)
 
 (cl-defmethod occ-get-categories ((_ org-projectile-per-project-strategy))
   (org-projectile-get-project-file-categories))
 
+(cl-defmethod occ-get-existing-categories ((strategy org-projectile-per-project-strategy))
+  (cl-loop for category in (occ-get-categories strategy)
+           when (file-exists-p (occ-get-capture-file strategy category))
+           collect category))
+
 (cl-defmethod occ-get-todo-files ((_ org-projectile-per-project-strategy))
-  (mapcar 'org-projectile-get-project-todo-file projectile-known-projects))
+  (->> projectile-known-projects
+       (cl-mapcar 'org-projectile-get-project-todo-file)
+       (cl-remove-if-not 'file-exists-p)))
 
 (cl-defmethod occ-get-capture-file
     ((s org-projectile-per-project-strategy) category)
   (let ((project-root
          (cdr (assoc category
-                     (org-projectile-category-to-project-path s)))))
+                     (org-projectile-build-category-to-project-path s)))))
     (org-projectile-get-project-todo-file project-root)))
 
 (cl-defmethod occ-get-capture-marker
@@ -195,7 +216,7 @@ compute this path."
     ((_ org-projectile-per-project-strategy) _context)
   nil)
 
-(cl-defmethod org-projectile-category-to-project-path
+(cl-defmethod org-projectile-build-category-to-project-path
     ((_ org-projectile-per-project-strategy))
   (mapcar (lambda (path)
             (cons (org-projectile-category-from-project-root
@@ -217,25 +238,20 @@ compute this path."
   (if org-projectile-counts-in-heading (concat heading " [/]")
     heading))
 
-(defclass org-projectile-top-level-categories-specifier nil nil)
+(defclass org-projectile-single-file-strategy (org-projectile-base-strategy) nil)
 
-(cl-defmethod org-projectile-get-existing-categories ())
-
-(defclass org-projectile-single-file-strategy nil nil)
-
-(cl-defmethod org-projectile-category-to-project-path
-    ((_s org-projectile-single-file-strategy))
-  (org-projectile-default-project-categories))
-
-(cl-defmethod occ-get-categories ((_s org-projectile-single-file-strategy))
+(cl-defmethod occ-get-categories ((strategy org-projectile-single-file-strategy))
   (cl-remove-if
    'null
    (delete-dups
     (nconc
      (org-projectile-get-categories-from-project-paths)
-     (occ-get-categories-from-filepath
-      org-projectile-projects-file
-      :get-category-from-element 'org-projectile-get-category-from-heading)))))
+     (occ-get-existing-categories strategy)))))
+
+(cl-defmethod occ-get-existing-categories ((_ org-projectile-single-file-strategy))
+  (occ-get-categories-from-filepath
+   org-projectile-projects-file
+   :get-category-from-element 'org-projectile-get-category-from-heading))
 
 (cl-defmethod occ-get-todo-files ((_ org-projectile-single-file-strategy))
   (list org-projectile-projects-file))
@@ -261,20 +277,52 @@ compute this path."
 (cl-defmethod occ-target-entry-p ((_ org-projectile-single-file-strategy) _c)
   t)
 
-(cl-defmethod org-projectile-category-to-project-path
-    ((_ org-projectile-single-file-strategy))
-  (mapcar (lambda (path)
-            (cons (org-projectile-category-from-project-root
-                   path) path)) projectile-known-projects))
+
+;; Combine strategies
+
+(defclass org-projectile-combine-strategies (org-projectile-base-strategy)
+  ((strategies :initarg :strategies)))
+
+(cl-defmethod initialize-instance
+  :after ((obj org-projectile-combine-strategies) &rest _args)
+  (unless (slot-boundp obj 'strategies)
+    (setf (slot-value obj 'strategies)
+          (list (make-instance 'org-projectile-per-project-strategy)
+                (make-instance 'org-projectile-single-file-strategy)))))
+
+(cl-defmethod occ-get-categories ((strategy org-projectile-combine-strategies))
+  (delete-dups (mapcan #'occ-get-categories (oref strategy strategies))))
+
+(cl-defmethod occ-get-todo-files ((strategy org-projectile-combine-strategies))
+  (mapcan #'occ-get-todo-files (oref strategy strategies)))
+
+(cl-defmethod occ-get-capture-marker
+  ((strategy org-projectile-combine-strategies) context)
+  (occ-get-capture-marker (org-projectile-select-strategy-from-context strategy context) context))
+
+(cl-defmethod occ-target-entry-p
+  ((strategy org-projectile-combine-strategies) context)
+  (occ-target-entry-p (org-projectile-select-strategy-from-context strategy context) context))
+
+(cl-defmethod org-projectile-select-strategy
+  ((strategy org-projectile-combine-strategies) project-name)
+  (cl-loop for substrategy in (oref strategy strategies)
+           if (memq project-name (occ-get-existing-categories substrategy))
+           return substrategy
+           finally return (car (oref strategy strategies))))
+
+(cl-defmethod org-projectile-select-strategy-from-context
+  ((strategy org-projectile-combine-strategies) context)
+  (org-projectile-select-strategy strategy (oref context category)))
 
 
 
 (setq org-projectile-strategy
-      (make-instance 'org-projectile-single-file-strategy))
+      (make-instance 'org-projectile-combine-strategies))
 
 (defun org-projectile-location-for-project (project)
   (cdr (assoc project
-              (org-projectile-category-to-project-path
+              (org-projectile-build-category-to-project-path
                org-projectile-strategy))))
 
 (cl-defun org-projectile-project-todo-entry
