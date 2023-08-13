@@ -47,9 +47,10 @@
   :group 'org-projectile)
 
 (defcustom org-projectile-projects-directory nil
-  "Directory to store per-project `org-projectile' TODOs. If non-nil, it
-would serve as a root directory for storing project specific TODOs.
-Otherwise, `org-projectile-per-project-filepath' would be used to build a
+  "Directory to store per-project `org-projectile' TODOs.
+If non-nil, it would serve as a root directory for storing
+project specific TODOs. Otherwise,
+`org-projectile-per-project-filepath' would be used to build a
 filename related to project root."
   :type '(string)
   :group 'org-projectile)
@@ -106,7 +107,7 @@ compute this path."
                   (let ((value (funcall it dir)))
                     (puthash cache-key value projectile-project-root-cache)
                     value)))
-              projectile-project-root-files-functions))))
+              projectile-project-root-functions))))
 
 (defun org-projectile-category-from-project-root (project-root)
   (file-name-nondirectory (directory-file-name project-root)))
@@ -223,7 +224,7 @@ compute this path."
   (mapcar 'org-projectile-category-from-project-root projectile-known-projects))
 
 (defun org-projectile-linked-heading (heading)
-  (org-make-link-string
+  (org-link-make-string
    (format "elisp:(org-projectile-open-project \"%s\")" heading) heading))
 
 (defun org-projectile-build-heading (heading)
