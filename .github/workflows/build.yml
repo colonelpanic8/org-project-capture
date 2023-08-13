@@ -12,9 +12,6 @@ jobs:
       fail-fast: false
       matrix:
         emacs-version:
-          - 25.3
-          - 26.3
-          - 27.2
           - snapshot
     steps:
       - uses: actions/checkout@v2
