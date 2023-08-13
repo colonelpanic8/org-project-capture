@@ -1,5 +1,5 @@
 #+ATTR_HTML: title="Join the chat at https://gitter.im/IvanMalison/org-projectile"
-[[https://travis-ci.org/IvanMalison/org-projectile][file:https://travis-ci.org/IvanMalison/org-projectile.svg?branch=master]]
+[[https://github.com/colonelpanic8/org-projectile/actions/workflows/build.yml/badge.svg][file:https://github.com/colonelpanic8/org-projectile/actions/workflows/build.yml]]
 [[https://gitter.im/IvanMalison/org-projectile?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge][file:https://badges.gitter.im/Join%20Chat.svg]]
 [[http://melpa.org/#/org-projectile][file:http://melpa.org/packages/org-projectile-badge.svg]]
 [[http://stable.melpa.org/#/org-projectile][file:http://stable.melpa.org/packages/org-projectile-badge.svg]]
