@@ -216,12 +216,6 @@ compute this path."
     ((_ org-projectile-per-project-strategy) _context)
   nil)
 
-(cl-defmethod org-projectile-build-category-to-project-path
-    ((_ org-projectile-per-project-strategy))
-  (mapcar (lambda (path)
-            (cons (org-projectile-category-from-project-root
-                   path) path)) projectile-known-projects))
-
 
 ;; Single file strategy
 
@@ -307,7 +301,7 @@ compute this path."
 (cl-defmethod org-projectile-select-strategy
   ((strategy org-projectile-combine-strategies) project-name)
   (cl-loop for substrategy in (oref strategy strategies)
-           if (memq project-name (occ-get-existing-categories substrategy))
+           if (--some (string-equal it project-name) (occ-get-existing-categories substrategy))
            return substrategy
            finally return (car (oref strategy strategies))))
 

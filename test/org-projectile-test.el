@@ -1,6 +1,6 @@
 ;;; org-projectile-test.el --- org-projectile test suite -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2015-2016 Ivan Malison
+;; Copyright (C) 2015-2023 Ivan Malison
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

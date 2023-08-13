@@ -56,48 +56,20 @@
    (strategy :initarg :strategy)))
 
 (cl-defmethod occ-build-capture-template
-    (context &key (character "p") (heading "Category TODO"))
+  (context &key (character "p") (heading "Category TODO"))
   (with-slots (template options strategy) context
     (apply 'list character heading 'entry
            (list 'function
-                 (apply-partially 'occ-get-capture-location strategy context))
+                 (lambda () (let ((marker (occ-get-capture-marker strategy context)))
+                              (switch-to-buffer (marker-buffer marker))
+                              (goto-char marker))))
            template options)))
 
 (cl-defmethod occ-capture ((context occ-context))
   (with-slots (category template options strategy)
       context
-    (org-capture-set-plist (occ-build-capture-template context))
-    ;; TODO/XXX: super gross that this had to be copied from org-capture,
-    ;; Unfortunately, it does not seem to be possible to call into org-capture
-    ;; because it makes assumptions that make it impossible to set things up
-    ;; properly. Specifically, the business logic of `org-capture' is tightly
-    ;; coupled to the UI/user interactions that usually take place.
-    (let ((orig-buf (current-buffer))
-          (annotation (if (and (boundp 'org-capture-link-is-already-stored)
-                               org-capture-link-is-already-stored)
-                          (plist-get org-store-link-plist :annotation)
-                        (ignore-errors (org-store-link nil)))))
-      (org-capture-put :original-buffer orig-buf
-                       :original-file
-                       (or (buffer-file-name orig-buf)
-                           (and (featurep 'dired)
-                                (car (rassq orig-buf dired-buffers))))
-                       :original-file-nondirectory
-                       (and (buffer-file-name orig-buf)
-                            (file-name-nondirectory
-                             (buffer-file-name orig-buf)))
-                       :annotation annotation
-                       :initial ""
-                       :return-to-wconf (current-window-configuration)
-                       :default-time
-                       (or org-overriding-default-time
-                           (org-current-time)))
-      (org-capture-put :template (org-capture-fill-template template))
-      (org-capture-set-target-location
-       (list 'function (lambda ()
-                         (occ-capture-goto-marker context))))
-      (org-capture-put :target-entry-p (occ-target-entry-p strategy context))
-      (org-capture-place-template))))
+    (let* ((org-capture-templates (list (occ-build-capture-template context))))
+      (org-capture nil "p"))))
 
 (defun occ-capture-goto-marker (context)
   (let ((marker (occ-get-capture-marker context)))

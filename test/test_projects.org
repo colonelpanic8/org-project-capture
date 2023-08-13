@@ -7,7 +7,7 @@
   :PROPERTIES:
   :CATEGORY: proj4
   :END:
-* [[elisp:(org-projectile:open-project%20"ideas")][ideas]] [0/22]
+* [[elisp:(org-projectile:open-project%20"ideas")][ideas]] [0/1]
   :PROPERTIES:
   :CATEGORY: ideas2
   :END:
