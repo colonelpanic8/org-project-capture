@@ -17,7 +17,7 @@
 
 ;;; Commentary:
 
-;; The unit test suite of org-projectile
+;; The unit test suite of org-project-capture
 
 ;;; Code:
 

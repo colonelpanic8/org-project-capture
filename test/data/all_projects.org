@@ -1,4 +1,4 @@
-* [[elisp:(org-projectile:open-project%20"github-search")][github-search]] [0/1]
+* [[elisp:(org-project-capture:open-project%20"github-search")][github-search]] [0/1]
 ** TODO do my thing
 ** TODO cool
 * proj1
@@ -7,11 +7,11 @@
   :PROPERTIES:
   :CATEGORY: proj4
   :END:
-* [[elisp:(org-projectile:open-project%20"ideas")][ideas]] [0/1]
+* [[elisp:(org-project-capture:open-project%20"ideas")][ideas]] [0/1]
   :PROPERTIES:
   :CATEGORY: ideas2
   :END:
 ** TODO
-* [[elisp:(org-projectile-open-project%20"test")][test]]
+* [[elisp:(org-project-capture-open-project%20"test")][test]]
 ** TODO
 * c
