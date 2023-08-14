@@ -1,71 +1,179 @@
 #+ATTR_HTML: title="Join the chat at https://gitter.im/IvanMalison/org-projectile"
-[[https://github.com/colonelpanic8/org-projectile/actions/workflows/build.yml][file:https://github.com/colonelpanic8/org-projectile/actions/workflows/build.yml/badge.svg]]
-[[https://gitter.im/IvanMalison/org-projectile?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge][file:https://badges.gitter.im/Join%20Chat.svg]]
-[[http://melpa.org/#/org-projectile][file:http://melpa.org/packages/org-projectile-badge.svg]]
-[[http://stable.melpa.org/#/org-projectile][file:http://stable.melpa.org/packages/org-projectile-badge.svg]]
+[[https://github.com/colonelpanic8/org-project-capture/actions/workflows/build.yml][file:https://github.com/colonelpanic8/org-project-capture/actions/workflows/build.yml/badge.svg]]
+[[https://gitter.im/IvanMalison/org-project-capture?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge][file:https://badges.gitter.im/Join%20Chat.svg]]
+[[http://melpa.org/#/org-project-capture][file:http://melpa.org/packages/org-project-capture-badge.svg]]
+[[http://stable.melpa.org/#/org-project-capture][file:http://stable.melpa.org/packages/org-project-capture-badge.svg]]
 
-org-projectile provides functions for the creation of [[http://orgmode.org/][org-mode]] TODOs that are associated with [[https://github.com/bbatsov/projectile][projectile]] projects.
-* Installation
+* org-project-capture
 
-Install from MELPA with ~M-x package-install org-projectile~. See the [[https://github.com/milkypostman/melpa][melpa repository]] for details about how to set up MELPA if you have not already done so.
-* Setup
-Before using org-projectile, you must specify the file you would like to use for storing project TODOs, as well as a keybinding for taking a project note with org-capture and a global keybinding for ~org-projectile-project-todo-completing-read~. It is recommended that you start with the following configuration:
+`org-project-capture` integrates `org-mode` TODOs with both `projectile` and `project.el`. This permits the maintenance of TODO lists for specific projects.
+
+** Installation
+
+- Install using the package instructions for your Emacs setup. If you're using MELPA:
+
+  #+BEGIN_SRC emacs-lisp
+  M-x package-install org-project-capture
+  #+END_SRC
+
+- For those intending to use the `projectile` backend, also install `org-projectile`:
+
+  #+BEGIN_SRC emacs-lisp
+  M-x package-install org-projectile
+  #+END_SRC
+
+** Setup
+
+*** Backend Selection
+
+You need to set the backend for `org-project-capture` using its class-based structure.
+
+- For `project.el`:
+
+  #+BEGIN_SRC emacs-lisp
+  (defvar org-project-capture-backend
+    (make-instance 'org-project-capture-project-backend))
+  #+END_SRC
+
+- If using `projectile` via `org-projectile`:
+
+  #+BEGIN_SRC emacs-lisp
+  (defvar org-project-capture-backend
+    (make-instance 'org-project-capture-projectile-backend))
+  #+END_SRC
+
+*** File Configuration
+
+Specify the location for storing project-specific TODOs:
+
+  #+BEGIN_SRC emacs-lisp
+  (setq org-project-capture-projects-file "~/org/projects.org")
+  #+END_SRC
+
+*** Keybindings
+
+Establish a keybinding for easy capturing:
+
+  #+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-c n p") 'org-project-capture-project-todo-completing-read)
+  #+END_SRC
+
+*** Capture Strategy
+
+Determine if TODOs should be in a single file or across individual projects:
+
+  #+BEGIN_SRC emacs-lisp
+  (org-project-capture-single-file)
+  ;; OR
+  (org-project-capture-per-project)
+  #+END_SRC
+
+** `use-package` Configuration
+
+For those utilizing `use-package`, here's a streamlined setup:
+
+  #+BEGIN_SRC emacs-lisp
+  (use-package org-project-capture
+    :bind (("C-c n p" . org-project-capture-project-todo-completing-read))
+    :config
+    (defvar org-project-capture-backend
+      (make-instance 'YOUR-CHOSEN-BACKEND))  ; Replace with your backend of choice
+    (setq org-project-capture-projects-file "~/org/projects.org")
+    (org-project-capture-single-file)  ; Or (org-project-capture-per-project)
+    :ensure t)
+  #+END_SRC
+
+** Customization
+
+There are numerous customization options for `org-project-capture`:
+
+  #+BEGIN_SRC emacs-lisp
+  M-x customize-group RET org-project-capture RET
+  #+END_SRC
+
+
+
+
+* org-project-capture
+
+`org-project-capture` integrates `org-mode` TODOs with both `projectile` and `project.el`. This allows for project-specific capture templates in `org-mode`.
+
+** Installation
+
+To install, follow the package installation instructions specific to your Emacs package management setup. If you're using MELPA:
 
 #+BEGIN_SRC emacs-lisp
-(require 'org-projectile)
-(setq org-projectile-projects-file
-      "/your/path/to/an/org/file/for/storing/project/todos.org")
-(push (org-projectile-project-todo-entry) org-capture-templates)
-(setq org-agenda-files (append org-agenda-files (org-projectile-todo-files)))
-(global-set-key (kbd "C-c c") 'org-capture)
-(global-set-key (kbd "C-c n p") 'org-projectile-project-todo-completing-read)
+M-x package-install org-project-capture
 #+END_SRC
 
-** use-package
-Here is the same configuration expressed using jwiegley's excellent [[https://github.com/jwiegley/use-package][use-package]]:
+If you intend to use the projectile backend, ensure org-projectile is also installed:
+emacs
 
 #+BEGIN_SRC emacs-lisp
-(use-package org-projectile
-  :bind (("C-c n p" . org-projectile-project-todo-completing-read)
-         ("C-c c" . org-capture))
+M-x package-install org-projectile
+#+END_SRC
+
+** Setup
+
+- *Backend Selection*
+
+  Before utilizing `org-project-capture`, you must decide on a backend.
+
+  #+BEGIN_SRC emacs-lisp
+  (setq org-project-capture-backend (make-instance 'YOUR-CHOSEN-BACKEND))
+  #+END_SRC
+
+Replace `YOUR-CHOSEN-BACKEND` with either `'org-project-capture-projectile-backend'` or `'org-project-capture-project-backend'`.
+
+- *File Configuration*
+
+  Specify where you'd like to store project-specific TODOs:
+
+  #+BEGIN_SRC emacs-lisp
+  (setq org-project-capture-projects-file "~/org/projects.org")
+  #+END_SRC
+
+- *Keybindings*
+
+  Set a keybinding for capturing TODOs:
+
+  #+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-c n p") 'org-project-capture-project-todo-completing-read)
+  #+END_SRC
+
+- *Strategy Selection*
+
+  Decide how you want to capture TODOs:
+
+  #+BEGIN_SRC emacs-lisp
+  (org-project-capture-single-file) ; For a single file
+  ;; OR
+  (org-project-capture-per-project) ; For individual projects
+  #+END_SRC
+
+** `use-package` Configuration
+
+For those using `use-package`, the setup can be more concise:
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-project-capture
+  :bind (("C-c n p" . org-project-capture-project-todo-completing-read))
   :config
-  (progn
-    (setq org-projectile-projects-file
-          "/your/path/to/an/org/file/for/storing/projects.org")
-    (setq org-agenda-files (append org-agenda-files (org-projectile-todo-files)))
-    (push (org-projectile-project-todo-entry) org-capture-templates))
+  (setq org-project-capture-backend (make-instance 'YOUR-CHOSEN-BACKEND))
+  (setq org-project-capture-projects-file "~/org/projects.org")
+  (org-project-capture-single-file) ; OR (org-project-capture-per-project)
   :ensure t)
 #+END_SRC
-** per-repo todo files
-If you would prefer to have an org file for each project that resides in the project directory, add the following elisp to your configuration:
+
+** Customization
+
+Many aspects of `org-project-capture` are customizable. To explore these options:
 
 #+BEGIN_SRC emacs-lisp
-  (require 'org-projectile)
-  (org-projectile-per-project)
-  (setq org-projectile-per-project-filepath "my_project_todo_filename.org")
-  (setq org-agenda-files (append org-agenda-files (org-projectile-todo-files)))
-  (global-set-key (kbd "C-c c") 'org-capture)
-  (global-set-key (kbd "C-c n p") 'org-projectile-project-todo-completing-read)
-#+END_SRC
-* Usage
-** ~org-projectile-project-todo-completing-read~
-opens a ~projectile-completing-read~ that allows the selection of a project
-heading under which to store the input that is subsequently captured in an
-~org-capture~ buffer. Completion candidates for this function are generated
-using the project list returned from ~(projectile-relevant-known-projects)~ and
-the existing headings in ~org-projectile-projects-file~.
-** ~org-projectile-project-todo-entry~
-is a function that builds an entry that can be added to ~org-capture-templates~ in order to use org-capture to make TODOs for the project to which the current buffer belongs. You can access org-capture mode with ~M-x org-capture~, but it is recommended that you bind org-capture to some key.
-
-Both of these functions will create the relevant top level heading in the [[http://orgmode.org/][org-mode]] file stored in ~org-projectile-projects-file~ if it does not exist.
-** Project headings are links
-   This means that if you run ~org-open-at-point~ when your cursor is over a linked heading, ~projectile-switch-project-action~ will be executed, and you will begin working in the relevant project. By default, emacs will prompt you about whether not to execute the elisp associated with the link. To disable this prompt, add
-
-#+BEGIN_SRC emacs-lisp
-(setq org-confirm-elisp-link-function nil)
+M-x customize-group RET org-project-capture RET
 #+END_SRC
 
-to your configuration.
-* Customization
-** Author's Configuration
-The author's configuration can be found [[http://ivanmalison.github.io/dotfiles/#orgprojectile][here]]. Check it out for some ideas about how to customize org-projectile.
+** Usage
+
+- Invoke `org-project-capture-project-todo-completing-read` to select a project and then record a TODO specific to it.
+- Use `org-project-capture-capture-for-current-project` to record a TODO for the currently active project.
