@@ -56,7 +56,7 @@
     (occ-goto-or-insert-category-heading category)
     (point-marker)))
 
-(cl-defmethod occ-target-entry-p ((_ occ-test-strategy) context) t)
+(cl-defmethod occ-target-entry-p ((_ occ-test-strategy) _context) t)
 
 (defvar occ-test-text-to-insert "dummy-text")
 
@@ -66,7 +66,7 @@
      (make-instance 'occ-context :category category :options nil :strategy
                     (make-instance 'occ-test-strategy) :template "* TODO %?\n"))))
 
-(defun occ-mock-place-template (&rest args)
+(defun occ-mock-place-template (&rest _args)
   (goto-char (org-capture-get :pos))
   (setq-local outline-level 'org-outline-level)
   (pcase (org-capture-get :type)
@@ -93,9 +93,9 @@
   :CATEGORY: actualcategory
   :END:
 * something
-") (noflet ((org-capture-place-template (&rest args)
+") (noflet ((org-capture-place-template (&rest _args)
                                         (occ-mock-place-template))
-            (org-capture-narrow (&rest args)
+            (org-capture-narrow (&rest _args)
                                 nil))
      (occ-do-test-capture "someproj" "dummy text")
      (occ-do-test-capture "anotherproj" "dummy text")
@@ -121,4 +121,4 @@
 ")))))
 
 (provide 'org-category-capture-test)
-;;; org-capture-test.el ends here
+;;; org-category-capture-test.el ends here
