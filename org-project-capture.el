@@ -90,7 +90,7 @@ compute this path."
 
 (defvar org-project-capture-strategy nil)
 
-(defvar org-project-capture-backend
+(defvar org-project-capture-default-backend
   (make-instance 'org-project-capture-project-backend))
 
 
@@ -133,7 +133,7 @@ compute this path."
 
 (cl-defmethod org-project-capture-strategy-get-backend
   ((strategy org-project-capture-base-strategy))
-  (or (oref strategy backend) org-project-capture-backend))
+  (or (oref strategy backend) org-project-capture-default-backend))
 
 (cl-defmethod org-project-capture-build-category-to-project-path
   ((strategy org-project-capture-base-strategy))
@@ -400,8 +400,7 @@ were part of the capture template definition."
   (occ-capture
    (make-instance 'occ-context
                   :category (org-project-capture-completing-read
-                             "Record TODO for project: "
-                             (occ-get-categories org-project-capture-strategy))
+                             "Record TODO for project: ")
                   :template (or capture-template
                                 org-project-capture-capture-template)
                   :strategy org-project-capture-strategy

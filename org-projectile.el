@@ -178,7 +178,7 @@ compute this path."
   (occ-get-todo-files org-projectile-strategy))
 
 (defun org-projectile-completing-read (prompt &rest args)
-  (apply 'org-projectile--completing-read
+  (apply 'org-project-capture--completing-read
          (org-project-capture-strategy-get-backend org-projectile-strategy)
          prompt args))
 
@@ -223,8 +223,7 @@ were part of the capture template definition."
   (occ-capture
    (make-instance 'occ-context
                   :category (org-projectile-completing-read
-                             "Record TODO for project: "
-                             (occ-get-categories org-projectile-strategy))
+                             "Record TODO for project: ")
                   :template (or capture-template
                                 org-project-capture-capture-template)
                   :strategy org-projectile-strategy
