@@ -1,12 +1,12 @@
-;;; org-projectile.el --- Repository todo management for org-mode -*- lexical-binding: t; -*-
+;;; org-project-capture.el --- Repository todo capture and management for org-mode -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2014-2023 Ivan Malison
 
 ;; Author: Ivan Malison <IvanMalison@gmail.com>
-;; Keywords: org-mode projectile todo tools outlines
-;; URL: https://github.com/IvanMalison/org-projectile
-;; Version: 1.1.0
-;; Package-Requires: ((projectile "0.11.0") (dash "2.10.0") (emacs "24") (s "1.9.0") (org-category-capture "0.0.0"))
+;; Keywords: org-mode todo tools outlines project capture
+;; URL: https://github.com/colonelpanic8/org-project-capture
+;; Version: 3.0.0
+;; Package-Requires: ((dash "2.10.0") (emacs "28") (s "1.9.0") (org-category-capture "1.0.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -23,8 +23,9 @@
 
 ;;; Commentary:
 
-;; This package aims to provide an easy interface to creating per
-;; project org-mode TODO headings.
+;; This package provides an easy interface to creating per project org-mode TODO
+;; headings, whether in a single file, or in a file stored in each project
+;; directory.
 
 ;;; Code:
 
@@ -33,107 +34,88 @@
 (require 'eieio)
 (require 'org)
 (require 'org-category-capture)
-(require 'projectile)
+(require 'org-project-capture-backend)
 (require 's)
 
-(defgroup org-projectile ()
-  "Customizations for org-projectile."
+(defgroup org-project-capture ()
+  "Customizations for org-project-capture."
   :group 'org
-  :prefix "org-projectile-")
+  :prefix "org-project-capture-")
 
-(defcustom org-projectile-projects-file "~/org/projects.org"
-  "The path to the file in which projectile TODOs will be stored."
+(defcustom org-project-capture-projects-file "~/org/projects.org"
+  "The path to the file in which project TODOs will be stored."
   :type '(string)
-  :group 'org-projectile)
+  :group 'org-project-capture)
 
-(defcustom org-projectile-projects-directory nil
-  "Directory to store per-project `org-projectile' TODOs.
+(defcustom org-project-capture-projects-directory nil
+  "Directory to store per-project `org-project-capture' TODOs.
 If non-nil, it would serve as a root directory for storing
 project specific TODOs. Otherwise,
-`org-projectile-per-project-filepath' would be used to build a
+`org-project-capture-per-project-filepath' would be used to build a
 filename related to project root."
   :type '(string)
-  :group 'org-projectile)
+  :group 'org-project-capture)
 
-(defcustom org-projectile-per-project-filepath "TODO.org"
-  "The path (relative to the project or `org-projectile-projects-directory')
+(defcustom org-project-capture-per-project-filepath "TODO.org"
+  "The path (relative to the project or `org-project-capture-projects-directory')
 where todos will be stored. Alternatively you may provide a function that will
 compute this path."
   :type '(choice string function)
-  :group 'org-projectile)
+  :group 'org-project-capture)
 
-(defcustom org-projectile-capture-template "* TODO %?\n"
-  "The default capture template to use for org-projectile TODOs."
+(defcustom org-project-capture-capture-template "* TODO %?\n"
+  "The default capture template to use for org-project-capture TODOs."
   :type '(string)
-  :group 'org-projectile)
+  :group 'org-project-capture)
 
-(defcustom org-projectile-force-linked t
+(defcustom org-project-capture-force-linked t
   "Whether to make project category headings links to their projects."
   :type '(boolean)
-  :group 'org-projectile)
+  :group 'org-project-capture)
 
-(defcustom org-projectile-counts-in-heading t
-  "Whether or not to make projectile category headings display counts."
+(defcustom org-project-capture-counts-in-heading t
+  "Whether or not to make project category headings display counts."
   :type '(boolean)
-  :group 'org-projectile)
+  :group 'org-project-capture)
 
-(defcustom org-projectile-subheading-selection t
+(defcustom org-project-capture-subheading-selection t
   "Controls whether or not project subheading selection is enabled."
   :type '(boolean)
-  :group 'org-projectile)
+  :group 'org-project-capture)
 
-(defcustom org-projectile-allow-tramp-projects nil
+(defcustom org-project-capture-allow-tramp-projects nil
   "Whether to use tramp/sudo requiring projects."
   :type '(boolean)
-  :group 'org-projectile)
+  :group 'org-project-capture)
+
+(defvar org-project-capture-strategy nil)
+
+(defvar org-project-capture-backend
+  (make-instance 'org-project-capture-project-backend))
 
 
 ;; Utility functions
 
-(defvar org-projectile-strategy nil)
-
-(defun org-projectile-io-action-permitted (filepath)
-  (or org-projectile-allow-tramp-projects
+(defun org-project-capture-io-action-permitted (filepath)
+  (or org-project-capture-allow-tramp-projects
       (eq nil (find-file-name-handler filepath 'file-truename))))
 
-(defun org-projectile-project-root-of-filepath (filepath)
-  (when (org-projectile-io-action-permitted filepath)
-    (let ((dir (file-name-directory filepath)))
-      (--some (let* ((cache-key (format "%s-%s" it dir))
-                     (cache-value (gethash
-                                   cache-key projectile-project-root-cache)))
-                (if cache-value
-                    cache-value
-                  (let ((value (funcall it dir)))
-                    (puthash cache-key value projectile-project-root-cache)
-                    value)))
-              projectile-project-root-functions))))
-
-(defun org-projectile-category-from-project-root (project-root)
-  (file-name-nondirectory (directory-file-name project-root)))
-
-(defun org-projectile-category-from-file (filename)
-  (let ((project-root (org-projectile-project-root-of-filepath filename)))
-    (when project-root
-      (org-projectile-category-from-project-root project-root))))
-
-(defun org-projectile-open-project (name)
+(defun org-project-capture-open-project (name)
   (let* ((name-to-location
-          (org-projectile-build-category-to-project-path org-projectile-strategy))
+          (org-project-capture-build-category-to-project-path
+           org-project-capture-strategy))
          (entry (assoc name name-to-location)))
     (when entry
-      (projectile-switch-project-by-name (cdr entry)))))
+      (org-project-capture-switch-to-project
+       (org-project-capture-strategy-get-backend
+        org-project-capture-strategy)
+       (cdr entry)))))
 
-(defun org-projectile-default-project-categories ()
-  (mapcar (lambda (path)
-            (cons (org-projectile-category-from-project-root
-                   path) path)) projectile-known-projects))
-
-(defun org-projectile-invert-alist (alist)
+(defun org-project-capture-invert-alist (alist)
   (mapcar (lambda (entry)
             (cons (cdr entry) (car entry))) alist))
 
-(defun org-projectile-get-category-from-heading ()
+(defun org-project-capture-get-category-from-heading ()
   (let* ((heading (org-get-heading))
          (no-links
           (replace-regexp-in-string
@@ -143,246 +125,274 @@ compute this path."
                (concat (match-string 2 m)))) heading nil t)))
     (s-trim (replace-regexp-in-string "\[[0-9]*/[0-9]*\]" "" no-links))))
 
-(defun org-projectile--build-category-to-project-path ()
-    (mapcar (lambda (path)
-              (cons (org-projectile-category-from-project-root
-                     path) path)) projectile-known-projects))
-
 
 ;; Base
 
-(defclass org-projectile-base-strategy (occ-strategy)
-  nil :abstract t)
+(defclass org-project-capture-base-strategy (occ-strategy)
+  ((backend :initarg :backend :initform nil)) :abstract t)
 
-(cl-defmethod org-projectile-build-category-to-project-path ((_ org-projectile-base-strategy))
-  (org-projectile--build-category-to-project-path))
+(cl-defmethod org-project-capture-strategy-get-backend
+  ((strategy org-project-capture-base-strategy))
+  (or (oref strategy backend) org-project-capture-backend))
+
+(cl-defmethod org-project-capture-build-category-to-project-path
+  ((strategy org-project-capture-base-strategy))
+  (org-project-capture-build-category-to-project-path
+   (org-project-capture-strategy-get-backend strategy)))
 
 
 ;; One file per project strategy
 
-(defun org-projectile-get-project-todo-file (project-path)
+(defun org-project-capture-get-project-todo-file (project-path)
   (let ((project-todos-filepath
-         (if (stringp org-projectile-per-project-filepath)
-             org-projectile-per-project-filepath
-           (funcall org-projectile-per-project-filepath project-path)))
-        (org-projectile-directory
-         (if org-projectile-projects-directory
-             org-projectile-projects-directory
+         (if (stringp org-project-capture-per-project-filepath)
+             org-project-capture-per-project-filepath
+           (funcall org-project-capture-per-project-filepath project-path)))
+        (org-project-capture-directory
+         (if org-project-capture-projects-directory
+             org-project-capture-projects-directory
            (file-name-as-directory project-path))))
-    (concat org-projectile-directory project-todos-filepath)))
+    (concat org-project-capture-directory project-todos-filepath)))
 
-(defun org-projectile-get-category-from-project-todo-file (project-path)
-  (let ((todo-filepath (org-projectile-get-project-todo-file project-path)))
-    (if (and (org-projectile-io-action-permitted todo-filepath)
+(defun org-project-capture-get-category-from-project-todo-file (project-path)
+  (let ((todo-filepath (org-project-capture-get-project-todo-file project-path)))
+    (if (and (org-project-capture-io-action-permitted todo-filepath)
              (file-exists-p todo-filepath))
         (with-current-buffer (find-file-noselect todo-filepath)
           (org-refresh-category-properties)
           org-category)
-      (org-projectile-category-from-project-root project-path))))
+      (org-project-capture-category-from-project-root project-path))))
 
-(defun org-projectile-get-project-file-categories ()
-  (mapcar 'org-projectile-category-from-project-root
-          projectile-known-projects))
+(defclass org-project-capture-per-project-strategy
+  (org-project-capture-base-strategy) nil)
 
-(defclass org-projectile-per-project-strategy (org-projectile-base-strategy) nil)
+(cl-defmethod occ-get-categories
+  ((strategy org-project-capture-per-project-strategy))
+  (org-project-capture-get-all-categories
+   (org-project-capture-strategy-get-backend strategy)))
 
-(cl-defmethod occ-get-categories ((_ org-projectile-per-project-strategy))
-  (org-projectile-get-project-file-categories))
-
-(cl-defmethod occ-get-existing-categories ((strategy org-projectile-per-project-strategy))
+(cl-defmethod occ-get-existing-categories
+  ((strategy org-project-capture-per-project-strategy))
   (cl-loop for category in (occ-get-categories strategy)
            when (file-exists-p (occ-get-capture-file strategy category))
            collect category))
 
-(cl-defmethod occ-get-todo-files ((_ org-projectile-per-project-strategy))
-  (->> projectile-known-projects
-       (cl-mapcar 'org-projectile-get-project-todo-file)
+(cl-defmethod occ-get-todo-files
+  ((strategy org-project-capture-per-project-strategy))
+  (->> (org-project-capture-get-all-project-paths
+        (org-project-capture-strategy-get-backend strategy))
+       (cl-mapcar 'org-project-capture-get-project-todo-file)
        (cl-remove-if-not 'file-exists-p)))
 
 (cl-defmethod occ-get-capture-file
-    ((s org-projectile-per-project-strategy) category)
+    ((s org-project-capture-per-project-strategy) category)
   (let ((project-root
          (cdr (assoc category
-                     (org-projectile-build-category-to-project-path s)))))
-    (org-projectile-get-project-todo-file project-root)))
+                     (org-project-capture-build-category-to-project-path s)))))
+    (org-project-capture-get-project-todo-file project-root)))
 
 (cl-defmethod occ-get-capture-marker
-    ((strategy org-projectile-per-project-strategy) context)
+    ((strategy org-project-capture-per-project-strategy) context)
   (with-slots (category) context
     (let ((filepath (occ-get-capture-file strategy category)))
       (with-current-buffer (find-file-noselect filepath)
         (point-max-marker)))))
 
 (cl-defmethod occ-target-entry-p
-    ((_ org-projectile-per-project-strategy) _context)
+    ((_ org-project-capture-per-project-strategy) _context)
   nil)
 
 
 ;; Single file strategy
 
-(defun org-projectile-get-categories-from-project-paths ()
-  (mapcar 'org-projectile-category-from-project-root projectile-known-projects))
-
-(defun org-projectile-linked-heading (heading)
+(defun org-project-capture-linked-heading (heading)
   (org-link-make-string
-   (format "elisp:(org-projectile-open-project \"%s\")" heading) heading))
+   (format "elisp:(org-project-capture-open-project \"%s\")" heading) heading))
 
-(defun org-projectile-build-heading (heading)
-  (when org-projectile-force-linked
-    (setq heading (org-projectile-linked-heading heading)))
-  (if org-projectile-counts-in-heading (concat heading " [/]")
+(defun org-project-capture-build-heading (heading)
+  (when org-project-capture-force-linked
+    (setq heading (org-project-capture-linked-heading heading)))
+  (if org-project-capture-counts-in-heading (concat heading " [/]")
     heading))
 
-(defclass org-projectile-single-file-strategy (org-projectile-base-strategy) nil)
+(defclass org-project-capture-single-file-strategy
+  (org-project-capture-base-strategy) nil)
 
-(cl-defmethod occ-get-categories ((strategy org-projectile-single-file-strategy))
+(cl-defmethod occ-get-categories
+  ((strategy org-project-capture-single-file-strategy))
   (cl-remove-if
    'null
    (delete-dups
     (nconc
-     (org-projectile-get-categories-from-project-paths)
+     (org-project-capture-get-all-categories
+      (org-project-capture-strategy-get-backend strategy))
      (occ-get-existing-categories strategy)))))
 
-(cl-defmethod occ-get-existing-categories ((_ org-projectile-single-file-strategy))
+(cl-defmethod occ-get-existing-categories
+  ((_ org-project-capture-single-file-strategy))
   (occ-get-categories-from-filepath
-   org-projectile-projects-file
-   :get-category-from-element 'org-projectile-get-category-from-heading))
+   org-project-capture-projects-file
+   :get-category-from-element 'org-project-capture-get-category-from-heading))
 
-(cl-defmethod occ-get-todo-files ((_ org-projectile-single-file-strategy))
-  (list org-projectile-projects-file))
+(cl-defmethod occ-get-todo-files ((_ org-project-capture-single-file-strategy))
+  (list org-project-capture-projects-file))
 
-(cl-defmethod occ-get-capture-file ((_ org-projectile-single-file-strategy) _c)
-  org-projectile-projects-file)
+(cl-defmethod occ-get-capture-file
+  ((_ org-project-capture-single-file-strategy) _c)
+  org-project-capture-projects-file)
 
 (cl-defmethod occ-get-capture-marker
-    ((strategy org-projectile-single-file-strategy) context)
+    ((strategy org-project-capture-single-file-strategy) context)
   (with-slots (category) context
     (let ((filepath (occ-get-capture-file strategy category)))
       (with-current-buffer (find-file-noselect filepath)
         (save-excursion
           (occ-goto-or-insert-category-heading
            category
-           :build-heading 'org-projectile-build-heading
-           :get-category-from-element 'org-projectile-get-category-from-heading)
+           :build-heading 'org-project-capture-build-heading
+           :get-category-from-element
+           'org-project-capture-get-category-from-heading)
           (point-marker))))))
 
-(defun org-projectile-linked-heading-regexp (heading)
+(defun org-project-capture-linked-heading-regexp (heading)
   (format "\\[\\[.*?]\\[%s]]" heading))
 
-(cl-defmethod occ-target-entry-p ((_ org-projectile-single-file-strategy) _c)
-  t)
+(cl-defmethod occ-target-entry-p
+  ((_ org-project-capture-single-file-strategy) _c) t)
 
 
 ;; Combine strategies
 
-(defclass org-projectile-combine-strategies (org-projectile-base-strategy)
+(defclass org-project-capture-combine-strategies
+  (org-project-capture-base-strategy)
   ((strategies :initarg :strategies)))
 
 (cl-defmethod initialize-instance
-  :after ((obj org-projectile-combine-strategies) &rest _args)
+  :after ((obj org-project-capture-combine-strategies) &rest _args)
   (unless (slot-boundp obj 'strategies)
     (setf (slot-value obj 'strategies)
-          (list (make-instance 'org-projectile-per-project-strategy)
-                (make-instance 'org-projectile-single-file-strategy)))))
+          (list (make-instance 'org-project-capture-per-project-strategy)
+                (make-instance 'org-project-capture-single-file-strategy)))))
 
-(cl-defmethod occ-get-categories ((strategy org-projectile-combine-strategies))
+(cl-defmethod occ-get-categories
+  ((strategy org-project-capture-combine-strategies))
   (delete-dups (mapcan #'occ-get-categories (oref strategy strategies))))
 
-(cl-defmethod occ-get-todo-files ((strategy org-projectile-combine-strategies))
+(cl-defmethod occ-get-existing-categories
+  ((strategy org-project-capture-combine-strategies))
+  (delete-dups
+   (mapcan #'occ-get-existing-categories (oref strategy strategies))))
+
+(cl-defmethod occ-get-todo-files
+  ((strategy org-project-capture-combine-strategies))
   (mapcan #'occ-get-todo-files (oref strategy strategies)))
 
 (cl-defmethod occ-get-capture-marker
-  ((strategy org-projectile-combine-strategies) context)
-  (occ-get-capture-marker (org-projectile-select-strategy-from-context strategy context) context))
+  ((strategy org-project-capture-combine-strategies) context)
+  (occ-get-capture-marker
+   (org-project-capture-select-strategy-from-context strategy context) context))
 
 (cl-defmethod occ-target-entry-p
-  ((strategy org-projectile-combine-strategies) context)
-  (occ-target-entry-p (org-projectile-select-strategy-from-context strategy context) context))
+  ((strategy org-project-capture-combine-strategies) context)
+  (occ-target-entry-p
+   (org-project-capture-select-strategy-from-context strategy context) context))
 
-(cl-defmethod org-projectile-select-strategy
-  ((strategy org-projectile-combine-strategies) project-name)
+(cl-defmethod org-project-capture-select-strategy
+  ((strategy org-project-capture-combine-strategies) project-name)
   (cl-loop for substrategy in (oref strategy strategies)
-           if (--some (string-equal it project-name) (occ-get-existing-categories substrategy))
+           if (--some (string-equal it project-name)
+                      (occ-get-existing-categories substrategy))
            return substrategy
            finally return (car (oref strategy strategies))))
 
-(cl-defmethod org-projectile-select-strategy-from-context
-  ((strategy org-projectile-combine-strategies) context)
-  (org-projectile-select-strategy strategy (oref context category)))
+(cl-defmethod org-project-capture-select-strategy-from-context
+  ((strategy org-project-capture-combine-strategies) context)
+  (org-project-capture-select-strategy strategy (oref context category)))
+
+(setq org-project-capture-strategy
+      (make-instance 'org-project-capture-combine-strategies))
 
 
 
-(setq org-projectile-strategy
-      (make-instance 'org-projectile-combine-strategies))
+(setq org-project-capture-strategy
+      (make-instance 'org-project-capture-combine-strategies))
 
-(defun org-projectile-location-for-project (project)
+(defun org-project-capture-location-for-project (project)
   (cdr (assoc project
-              (org-projectile-build-category-to-project-path
-               org-projectile-strategy))))
+              (org-project-capture-build-category-to-project-path
+               org-project-capture-strategy))))
 
-(cl-defun org-projectile-project-todo-entry
+(cl-defun org-project-capture-project-todo-entry
     (&rest additional-options &key (capture-character "p")
-           (capture-template org-projectile-capture-template)
+           (capture-template org-project-capture-capture-template)
            (capture-heading "Project Todo") &allow-other-keys)
   (let ((target-fn
          (lambda ()
            (occ-capture-goto-marker
-            (make-instance 'occ-context
-                           :category (org-projectile-category-from-file
-                                      (org-capture-get :original-file))
-                           :template capture-template
-                           :strategy org-projectile-strategy
-                           :options additional-options)))))
+            (make-instance
+             'occ-context
+             :category (org-project-capture-category-from-file
+                        (org-project-capture-strategy-get-backend
+                         org-project-capture-strategy)
+                        (org-capture-get :original-file))
+             :template capture-template
+             :strategy org-project-capture-strategy
+             :options additional-options)))))
     `(,capture-character ,capture-heading entry
                          (function
                           ,target-fn)
                          ,capture-template ,@additional-options)))
 
-(defun org-projectile-get-marker-for-category (category)
+(defun org-project-capture-get-marker-for-category (category)
   (occ-get-capture-marker
-   org-projectile-strategy
+   org-project-capture-strategy
    (make-instance 'occ-context
                   :category category
                   :options nil
-                  :strategy org-projectile-strategy
-                  :template org-projectile-capture-template)))
+                  :strategy org-project-capture-strategy
+                  :template org-project-capture-capture-template)))
 
-(defun org-projectile-todo-files ()
-  (occ-get-todo-files org-projectile-strategy))
+(defun org-project-capture-todo-files ()
+  (--filter (file-exists-p it) (occ-get-todo-files org-project-capture-strategy)))
+
+(defun org-project-capture-completing-read (prompt &rest args)
+  (apply 'org-project-capture--completing-read
+         (org-project-capture-strategy-get-backend org-project-capture-strategy)
+         prompt args))
 
 ;;;###autoload
-(defun org-projectile-goto-location-for-project (project)
+(defun org-project-capture-goto-location-for-project (project)
   "Goto the location at which TODOs for PROJECT are stored."
   (interactive
    (list
-    (projectile-completing-read
+    (org-project-capture-completing-read
      "Select which project's TODOs you would like to go to:"
-     (occ-get-categories org-projectile-strategy))))
+     (occ-get-categories org-project-capture-strategy))))
   (occ-capture-goto-marker
    (make-instance 'occ-context
                   :category project
-                  :template org-projectile-capture-template
-                  :strategy org-projectile-strategy
+                  :template org-project-capture-capture-template
+                  :strategy org-project-capture-strategy
                   :options nil)))
 
 ;;;###autoload
-(defun org-projectile-single-file ()
-  "Set `org-projectile-strategy' so that captures occur in a single file."
+(defun org-project-capture-single-file ()
+  "Set `org-project-capture-strategy' so that captures occur in a single file."
   (interactive)
-  (setq org-projectile-strategy
-        (make-instance 'org-projectile-single-file-strategy)))
+  (setq org-project-capture-strategy
+        (make-instance 'org-project-capture-single-file-strategy)))
 
 ;;;###autoload
-(defun org-projectile-per-project ()
-  "Set `org-projectile-strategy' so that captures occur within each project."
+(defun org-project-capture-per-project ()
+  "Set `org-project-capture-strategy' so that captures occur within each project."
   (interactive)
-  (setq org-projectile-strategy
-        (make-instance 'org-projectile-per-project-strategy)))
+  (setq org-project-capture-strategy
+        (make-instance 'org-project-capture-per-project-strategy)))
 
 ;;;###autoload
-(cl-defun org-projectile-project-todo-completing-read
+(cl-defun org-project-capture-project-todo-completing-read
     (&rest additional-options &key capture-template &allow-other-keys)
-  "Select a project using a `projectile-completing-read' and record a TODO.
+  "Select a project using a `completing-read' and record a TODO.
 
 If CAPTURE-TEMPLATE is provided use it as the capture template
 for the TODO. ADDITIONAL-OPTIONS will be supplied as though they
@@ -390,34 +400,36 @@ were part of the capture template definition."
   (interactive)
   (occ-capture
    (make-instance 'occ-context
-                  :category (projectile-completing-read
+                  :category (org-project-capture-completing-read
                              "Record TODO for project: "
-                             (occ-get-categories org-projectile-strategy))
+                             (occ-get-categories org-project-capture-strategy))
                   :template (or capture-template
-                                org-projectile-capture-template)
-                  :strategy org-projectile-strategy
+                                org-project-capture-capture-template)
+                  :strategy org-project-capture-strategy
                   :options additional-options)))
 
 ;;;###autoload
-(cl-defun org-projectile-capture-for-current-project
+(cl-defun org-project-capture-capture-for-current-project
     (&rest additional-options &key capture-template &allow-other-keys)
-  "Capture a TODO for the current active projectile project.
+  "Capture a TODO for the current active project.
 
 If CAPTURE-TEMPLATE is provided use it as the capture template
 for the TODO. ADDITIONAL-OPTIONS will be supplied as though they
 were part of the capture template definition."
   (interactive)
-  (let ((project-name (projectile-project-name)))
-    (if (projectile-project-p)
+  (let ((project-name
+         (org-project-capture-current-project
+          (org-project-capture-strategy-get-backend org-project-capture-strategy))))
+    (if project-name
         (occ-capture
          (make-instance 'occ-context
                         :category project-name
                         :template (or capture-template
-                                      org-projectile-capture-template)
+                                      org-project-capture-capture-template)
                         :options additional-options
-                        :strategy org-projectile-strategy))
-      (error (format "%s is not a recognized projectile project."
+                        :strategy org-project-capture-strategy))
+      (error (format "%s is not a recognized project."
                      project-name)))))
 
-(provide 'org-projectile)
-;;; org-projectile.el ends here
+(provide 'org-project-capture)
+;;; org-project-capture.el ends here

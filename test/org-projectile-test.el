@@ -1,4 +1,4 @@
-;;; org-projectile-test.el --- org-projectile test suite -*- lexical-binding: t; -*-
+;;; org-project-capture-test.el --- org-project-capture test suite -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2015-2023 Ivan Malison
 
@@ -17,13 +17,14 @@
 
 ;;; Commentary:
 
-;; The unit test suite of org-projectile
+;; The unit test suite of org-project-capture
 
 ;;; Code:
 
 (require 'ert)
 (require 'noflet)
 
+(require 'org-project-capture)
 (require 'org-projectile)
 (setq org-adapt-indentation 1)
 
@@ -32,76 +33,79 @@
    (-all? (lambda (element) (member element seq2)) seq1)
    (-all? (lambda (element) (member element seq1)) seq2)))
 
-(defun org-projectile-test-join-paths (root &rest dirs)
+(defun org-project-capture-test-join-paths (root &rest dirs)
   (let ((result root))
     (cl-loop for dir in dirs do
              (setq result (concat (file-name-as-directory result) dir)))
     result))
 
-(defvar org-projectile-test-data-directory
-  (org-projectile-test-join-paths
+(defvar org-project-capture-test-data-directory
+  (org-project-capture-test-join-paths
    (file-name-directory (or load-file-name buffer-file-name)) "data"))
 
-(defun org-projectile-test-file (&rest paths)
-  (apply 'org-projectile-test-join-paths org-projectile-test-data-directory
+(defun org-project-capture-test-file (&rest paths)
+  (apply 'org-project-capture-test-join-paths org-project-capture-test-data-directory
          paths))
 
-(defvar org-projectile-test-all-projects (org-projectile-test-file "all_projects.org"))
+(defvar org-project-capture-test-all-projects (org-project-capture-test-file "all_projects.org"))
 
-(ert-deftest test-org-projectile-supports-various-heading-types ()
-  (setq org-projectile-strategy
-        (make-instance 'org-projectile-single-file-strategy)
-        org-projectile-projects-file org-projectile-test-all-projects)
-  (let ((projectile-known-projects nil))
+(ert-deftest test-org-project-capture-supports-various-heading-types ()
+  (let ((org-project-capture-strategy (make-instance 'org-project-capture-single-file-strategy))
+        (org-project-capture-projects-file org-project-capture-test-all-projects)
+        (org-project-capture-backend
+         (make-instance 'org-project-capture-projectile-backend))
+        (projectile-known-projects nil))
     (should (equal-as-sets
-             (occ-get-categories org-projectile-strategy)
+             (occ-get-categories org-project-capture-strategy)
              '("proj1" "ideas2" "test" "proj4" "proj3" "github-search" "c")))))
 
-(ert-deftest test-org-projectile-per-project-filepath-with-function ()
-  (let* ((org-projectile-strategy (make-instance 'org-projectile-per-project-strategy))
-         (a-project (org-projectile-test-file "a"))
-         (b-project (org-projectile-test-file "b"))
+(ert-deftest test-org-project-capture-per-project-filepath-with-function ()
+  (let* ((org-project-capture-backend (make-instance 'org-project-capture-projectile-backend))
+         (org-project-capture-strategy (make-instance 'org-project-capture-per-project-strategy))
+         (a-project (org-project-capture-test-file "a"))
+         (b-project (org-project-capture-test-file "b"))
          (projectile-known-projects
           (list a-project b-project))
-         (org-projectile-per-project-filepath
+         (org-project-capture-per-project-filepath
           (lambda (path)
             (if (string-equal path b-project)
                 "OTHER.org"
               "TODO.org"))))
     (should (equal-as-sets
-             (org-projectile-todo-files)
-             (list (org-projectile-test-join-paths a-project "TODO.org")
-                   (org-projectile-test-join-paths b-project "OTHER.org"))))
-    (let ((org-projectile-per-project-filepath "COOL.org"))
+             (org-project-capture-todo-files)
+             (list (org-project-capture-test-join-paths a-project "TODO.org")
+                   (org-project-capture-test-join-paths b-project "OTHER.org"))))
+    (let ((org-project-capture-per-project-filepath "COOL.org"))
       (should (equal-as-sets
-               (org-projectile-todo-files)
+               (org-project-capture-todo-files)
                ;; The "b" project does not have a COOL.org
-               (list (org-projectile-test-join-paths a-project "COOL.org")))))))
+               (list (org-project-capture-test-join-paths a-project "COOL.org")))))))
 
-(defun org-projectile-test-get-project-capture-filepath (project-name)
+(defun org-project-capture-test-get-project-capture-filepath (project-name)
   (with-current-buffer
       (marker-buffer (occ-get-capture-marker
                       (make-instance 'occ-context
                                      :category project-name
-                                     :template org-projectile-capture-template
-                                     :strategy org-projectile-strategy)))
+                                     :template org-project-capture-capture-template
+                                     :strategy org-project-capture-strategy)))
     (buffer-file-name)))
 
-(ert-deftest test-org-projectile-combine-strategies ()
-  (let* ((org-projectile-strategy (make-instance 'org-projectile-combine-strategies))
-         (a-project (org-projectile-test-file "a"))
-         (b-project (org-projectile-test-file "b"))
-         (c-project (org-projectile-test-file "c"))
-         (org-projectile-projects-file org-projectile-test-all-projects)
+(ert-deftest test-org-project-capture-combine-strategies ()
+  (let* ((org-project-capture-backend (make-instance 'org-project-capture-projectile-backend))
+         (org-project-capture-strategy (make-instance 'org-project-capture-combine-strategies))
+         (a-project (org-project-capture-test-file "a"))
+         (b-project (org-project-capture-test-file "b"))
+         (c-project (org-project-capture-test-file "c"))
+         (org-project-capture-projects-file org-project-capture-test-all-projects)
          (projectile-known-projects
           (list a-project b-project c-project)))
     (should (equal-as-sets
-             (occ-get-categories org-projectile-strategy)
+             (occ-get-categories org-project-capture-strategy)
              '("proj1" "ideas2" "test" "proj4" "proj3" "github-search" "a" "b" "c")))
-    (should (string-equal (org-projectile-test-get-project-capture-filepath "c")
-                          org-projectile-test-all-projects))
-    (should (string-equal (org-projectile-test-get-project-capture-filepath "a")
-                          (org-projectile-test-join-paths a-project "TODO.org")))))
+    (should (string-equal (org-project-capture-test-get-project-capture-filepath "c")
+                          org-project-capture-test-all-projects))
+    (should (string-equal (org-project-capture-test-get-project-capture-filepath "a")
+                          (org-project-capture-test-join-paths a-project "TODO.org")))))
 
-(provide 'org-projectile-test)
-;;; org-projectile-test.el ends here
+(provide 'org-project-capture-test)
+;;; org-project-capture-test.el ends here
