@@ -52,7 +52,7 @@
 (ert-deftest test-org-project-capture-supports-various-heading-types ()
   (let ((org-project-capture-strategy (make-instance 'org-project-capture-single-file-strategy))
         (org-project-capture-projects-file org-project-capture-test-all-projects)
-        (org-project-capture-backend
+        (org-project-capture-default-backend
          (make-instance 'org-project-capture-projectile-backend))
         (projectile-known-projects nil))
     (should (equal-as-sets
@@ -60,7 +60,7 @@
              '("proj1" "ideas2" "test" "proj4" "proj3" "github-search" "c")))))
 
 (ert-deftest test-org-project-capture-per-project-filepath-with-function ()
-  (let* ((org-project-capture-backend (make-instance 'org-project-capture-projectile-backend))
+  (let* ((org-project-capture-default-backend (make-instance 'org-project-capture-projectile-backend))
          (org-project-capture-strategy (make-instance 'org-project-capture-per-project-strategy))
          (a-project (org-project-capture-test-file "a"))
          (b-project (org-project-capture-test-file "b"))
@@ -91,7 +91,7 @@
     (buffer-file-name)))
 
 (ert-deftest test-org-project-capture-combine-strategies ()
-  (let* ((org-project-capture-backend (make-instance 'org-project-capture-projectile-backend))
+  (let* ((org-project-capture-default-backend (make-instance 'org-project-capture-projectile-backend))
          (org-project-capture-strategy (make-instance 'org-project-capture-combine-strategies))
          (a-project (org-project-capture-test-file "a"))
          (b-project (org-project-capture-test-file "b"))
@@ -107,5 +107,5 @@
     (should (string-equal (org-project-capture-test-get-project-capture-filepath "a")
                           (org-project-capture-test-join-paths a-project "TODO.org")))))
 
-(provide 'org-project-capture-test)
-;;; org-project-capture-test.el ends here
+(provide 'org-projectile-test)
+;;; org-projectile-test.el ends here
