@@ -175,7 +175,7 @@ compute this path."
 ;; Functions and autoloads
 
 (defun org-projectile-todo-files ()
-  (--filter (file-exists-p it) (occ-get-todo-files org-projectile-strategy)))
+  (occ-get-todo-files org-projectile-strategy))
 
 (defun org-projectile-completing-read (prompt &rest args)
   (apply 'org-projectile--completing-read

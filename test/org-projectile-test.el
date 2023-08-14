@@ -78,8 +78,8 @@
     (let ((org-project-capture-per-project-filepath "COOL.org"))
       (should (equal-as-sets
                (org-project-capture-todo-files)
-               ;; The "b" project does not have a COOL.org
-               (list (org-project-capture-test-join-paths a-project "COOL.org")))))))
+               (list (org-project-capture-test-join-paths a-project "COOL.org")
+                     (org-project-capture-test-join-paths b-project "COOL.org")))))))
 
 (defun org-project-capture-test-get-project-capture-filepath (project-name)
   (with-current-buffer

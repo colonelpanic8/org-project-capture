@@ -181,8 +181,7 @@ compute this path."
   ((strategy org-project-capture-per-project-strategy))
   (->> (org-project-capture-get-all-project-paths
         (org-project-capture-strategy-get-backend strategy))
-       (cl-mapcar 'org-project-capture-get-project-todo-file)
-       (cl-remove-if-not 'file-exists-p)))
+       (cl-mapcar 'org-project-capture-get-project-todo-file)))
 
 (cl-defmethod occ-get-capture-file
     ((s org-project-capture-per-project-strategy) category)
@@ -353,7 +352,7 @@ compute this path."
                   :template org-project-capture-capture-template)))
 
 (defun org-project-capture-todo-files ()
-  (--filter (file-exists-p it) (occ-get-todo-files org-project-capture-strategy)))
+  (occ-get-todo-files org-project-capture-strategy))
 
 (defun org-project-capture-completing-read (prompt &rest args)
   (apply 'org-project-capture--completing-read
