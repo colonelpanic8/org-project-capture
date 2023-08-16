@@ -5,8 +5,8 @@
 ;; Author: Ivan Malison <IvanMalison@gmail.com>
 ;; Keywords: org-mode projectile todo tools outlines project capture
 ;; URL: https://github.com/colonelpanic8/org-project-capture
-;; Version: 3.0.0
-;; Package-Requires: ((projectile "2.3.0") (dash "2.10.0") (org-project-capture "3.0.0"))
+;; Version: 3.0.1
+;; Package-Requires: ((projectile "2.3.0") (dash "2.10.0") (org-project-capture "3.0.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -169,12 +169,13 @@ compute this path."
 
 (defvar org-projectile-strategy (make-instance 'org-projectile-combine-strategies))
 
-(make-obsolete-variable 'org-projectile-strategy 'org-project-capture-strategy "4.0.0")
+(make-obsolete-variable 'org-projectile-strategy 'org-project-capture-strategy "3.0.1")
 
 
 ;; Functions and autoloads
 
 (defun org-projectile-todo-files ()
+  (declare (obsolete org-project-capture-todo-files "3.0.1"))
   (occ-get-todo-files org-projectile-strategy))
 
 (defun org-projectile-completing-read (prompt &rest args)
@@ -185,6 +186,7 @@ compute this path."
 ;;;###autoload
 (defun org-projectile-goto-location-for-project (project)
   "Goto the location at which TODOs for PROJECT are stored."
+  (declare (obsolete org-project-capture-goto-location-for-project "3.0.1"))
   (interactive
    (list
     (org-projectile-completing-read
@@ -200,6 +202,7 @@ compute this path."
 ;;;###autoload
 (defun org-projectile-single-file ()
   "Set `org-projectile-strategy' so that captures occur in a single file."
+  (declare (obsolete org-project-capture-single-file "3.0.1"))
   (interactive)
   (setq org-projectile-strategy
         (make-instance 'org-projectile-single-file-strategy)))
@@ -207,6 +210,7 @@ compute this path."
 ;;;###autoload
 (defun org-projectile-per-project ()
   "Set `org-projectile-strategy' so that captures occur within each project."
+  (declare (obsolete org-project-capture-per-project "3.0.1"))
   (interactive)
   (setq org-projectile-strategy
         (make-instance 'org-projectile-per-project-strategy)))
@@ -219,6 +223,7 @@ compute this path."
 If CAPTURE-TEMPLATE is provided use it as the capture template
 for the TODO. ADDITIONAL-OPTIONS will be supplied as though they
 were part of the capture template definition."
+  (declare (obsolete org-project-capture-project-todo-completing-read "3.0.1"))
   (interactive)
   (occ-capture
    (make-instance 'occ-context
@@ -237,6 +242,7 @@ were part of the capture template definition."
 If CAPTURE-TEMPLATE is provided use it as the capture template
 for the TODO. ADDITIONAL-OPTIONS will be supplied as though they
 were part of the capture template definition."
+  (declare (obsolete org-project-capture-capture-for-current-project "3.0.1"))
   (interactive)
   (let ((project-name
          (org-project-capture-current-project

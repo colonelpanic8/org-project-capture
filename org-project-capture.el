@@ -5,7 +5,7 @@
 ;; Author: Ivan Malison <IvanMalison@gmail.com>
 ;; Keywords: org-mode todo tools outlines project capture
 ;; URL: https://github.com/colonelpanic8/org-project-capture
-;; Version: 3.0.0
+;; Version: 3.0.1
 ;; Package-Requires: ((dash "2.10.0") (emacs "28") (s "1.9.0") (org-category-capture "1.0.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
