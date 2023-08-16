@@ -6,7 +6,7 @@
 ;; Keywords: org-mode projectile todo tools outlines project capture
 ;; URL: https://github.com/colonelpanic8/org-project-capture
 ;; Version: 3.0.0
-;; Package-Requires: ((projectile "2.3.0") (dash "2.10.0") (org-category-capture "1.0.0"))
+;; Package-Requires: ((projectile "2.3.0") (dash "2.10.0") (org-project-capture "3.0.0"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
