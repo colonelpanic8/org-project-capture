@@ -223,7 +223,8 @@ compute this path."
     heading))
 
 (defclass org-project-capture-single-file-strategy
-  (org-project-capture-base-strategy) nil)
+  (org-project-capture-base-strategy)
+  ((targeter :initarg targeter :initform nil)))
 
 (cl-defmethod occ-get-categories
   ((strategy org-project-capture-single-file-strategy))
@@ -249,17 +250,31 @@ compute this path."
   org-project-capture-projects-file)
 
 (cl-defmethod occ-get-capture-marker
-    ((strategy org-project-capture-single-file-strategy) context)
+  ((strategy org-project-capture-single-file-strategy) context)
   (with-slots (category) context
     (let ((filepath (occ-get-capture-file strategy category)))
       (with-current-buffer (find-file-noselect filepath)
         (save-excursion
+          (org-project-capture-target-projects-heading strategy context)
           (occ-goto-or-insert-category-heading
            category
            :build-heading 'org-project-capture-build-heading
            :get-category-from-element
            'org-project-capture-get-category-from-heading)
+          (org-project-capture-target-within-project strategy context)
           (point-marker))))))
+
+(cl-defmethod org-project-capture-target-projects-heading
+  ((strategy org-project-capture-single-file-strategy) context)
+  (with-slots (targeter) strategy
+    (when targeter
+      (org-project-capture-target-projects-heading targeter context))))
+
+(cl-defmethod org-project-capture-target-within-project
+  ((strategy org-project-capture-single-file-strategy) context)
+  (with-slots (targeter) strategy
+    (when targeter
+      (org-project-capture-target-within-project targeter context))))
 
 (defun org-project-capture-linked-heading-regexp (heading)
   (format "\\[\\[.*?]\\[%s]]" heading))
