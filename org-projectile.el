@@ -63,7 +63,7 @@
 (cl-defmethod org-project-capture-switch-to-project
   ((_ org-project-capture-projectile-backend) directory)
     (when directory
-      (projectile-switch-project directory)))
+      (projectile-switch-project-by-name directory)))
 
 (cl-defmethod org-project-capture-current-project
   ((_backend org-project-capture-projectile-backend))
