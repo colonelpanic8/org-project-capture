@@ -6,7 +6,7 @@
 ;; Keywords: org-mode projectile todo tools outlines project capture
 ;; URL: https://github.com/colonelpanic8/org-project-capture
 ;; Version: 3.0.1
-;; Package-Requires: ((projectile "2.3.0") (dash "2.10.0") (org-project-capture "3.0.1"))
+;; Package-Requires: ((projectile "2.3.0") (dash "2.10.0") (org-project-capture "3.0.1") (org-category-capture "3.0.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@
 (require 'dash)
 (require 'eieio)
 (require 'projectile)
+(require 'org-category-capture)
 (require 'org-project-capture)
 (require 'org-project-capture-backend)
 
@@ -173,6 +174,29 @@ compute this path."
 
 
 ;; Functions and autoloads
+
+(cl-defun org-projectile-project-todo-entry
+    (&rest additional-options &key (capture-character "p")
+           (capture-template org-project-capture-capture-template)
+           (capture-heading "Project Todo") &allow-other-keys)
+  (let ((target-fn
+         (lambda ()
+           (occ-capture-edit-at-marker
+            (make-instance
+             'occ-context
+             :category (org-project-capture-category-from-file
+                        (org-project-capture-strategy-get-backend
+                         org-project-capture-strategy)
+                        (or (org-capture-get :original-file)
+                            (with-current-buffer (org-capture-get :original-buffer)
+                              default-directory)))
+             :template capture-template
+             :strategy org-project-capture-strategy
+             :options additional-options)))))
+    `(,capture-character ,capture-heading entry
+                         (function
+                          ,target-fn)
+                         ,capture-template ,@additional-options)))
 
 (defun org-projectile-todo-files ()
   (declare (obsolete org-project-capture-todo-files "3.0.1"))
