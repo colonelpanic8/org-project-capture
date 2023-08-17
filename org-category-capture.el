@@ -60,9 +60,7 @@
   (with-slots (template options strategy) context
     (apply 'list character heading 'entry
            (list 'function
-                 (lambda () (let ((marker (occ-get-capture-marker strategy context)))
-                              (switch-to-buffer (marker-buffer marker))
-                              (goto-char marker))))
+                 (lambda () (occ-capture-edit-at-marker context)))
            template options)))
 
 (cl-defmethod occ-capture ((context occ-context))
@@ -71,7 +69,12 @@
     (let* ((org-capture-templates (list (occ-build-capture-template context))))
       (org-capture nil "p"))))
 
-(defun occ-capture-goto-marker (context)
+(cl-defmethod occ-capture-edit-at-marker ((context occ-context))
+  (let ((marker (occ-get-capture-marker context)))
+    (set-buffer (marker-buffer marker))
+    (goto-char (marker-position marker))))
+
+(cl-defmethod occ-capture-goto-marker ((context occ-context))
   (let ((marker (occ-get-capture-marker context)))
     (switch-to-buffer (marker-buffer marker))
     (goto-char (marker-position marker))))

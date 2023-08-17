@@ -335,7 +335,7 @@ compute this path."
            (capture-heading "Project Todo") &allow-other-keys)
   (let ((target-fn
          (lambda ()
-           (occ-capture-goto-marker
+           (occ-capture-edit-at-marker
             (make-instance
              'occ-context
              :category (org-project-capture-category-from-file
