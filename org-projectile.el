@@ -5,7 +5,7 @@
 ;; Author: Ivan Malison <IvanMalison@gmail.com>
 ;; Keywords: org-mode projectile todo tools outlines project capture
 ;; URL: https://github.com/colonelpanic8/org-project-capture
-;; Version: 3.0.1
+;; Version: 3.1.1
 ;; Package-Requires: ((projectile "2.3.0") (dash "2.10.0") (org-project-capture "3.0.1") (org-category-capture "3.0.1"))
 
 ;; This program is free software; you can redistribute it and/or modify
