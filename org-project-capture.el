@@ -373,8 +373,7 @@ compute this path."
   (interactive
    (list
     (org-project-capture-completing-read
-     "Select which project's TODOs you would like to go to:"
-     (occ-get-categories org-project-capture-strategy))))
+     "Select which project's TODOs you would like to go to:")))
   (occ-capture-goto-marker
    (make-instance 'occ-context
                   :category project
