@@ -176,7 +176,7 @@ compute this path."
 
 (defun org-projectile-todo-files ()
   (declare (obsolete org-project-capture-todo-files "3.0.1"))
-  (occ-get-todo-files org-projectile-strategy))
+  (--filter (file-readable-p it) (occ-get-todo-files org-projectile-strategy)))
 
 (defun org-projectile-completing-read (prompt &rest args)
   (apply 'org-project-capture--completing-read

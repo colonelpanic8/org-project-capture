@@ -352,7 +352,8 @@ compute this path."
                   :template org-project-capture-capture-template)))
 
 (defun org-project-capture-todo-files ()
-  (occ-get-todo-files org-project-capture-strategy))
+  (--filter (file-readable-p it)
+            (occ-get-todo-files org-project-capture-strategy)))
 
 (defun org-project-capture-completing-read (prompt &rest args)
   (apply 'org-project-capture--completing-read
