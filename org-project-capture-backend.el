@@ -62,11 +62,6 @@
   (mapcar 'org-project-capture-category-from-project-root
           (org-project-capture-get-all-project-paths backend)))
 
-(cl-defmethod org-project-capture--completing-read
-  ((backend org-project-capture-backend) prompt &rest args)
-  (apply 'completing-read prompt (org-project-capture-get-all-categories backend)
-         args))
-
 
 ;; project.el backend
 

@@ -364,9 +364,8 @@ compute this path."
             (occ-get-todo-files org-project-capture-strategy)))
 
 (defun org-project-capture-completing-read (prompt &rest args)
-  (apply 'org-project-capture--completing-read
-         (org-project-capture-strategy-get-backend org-project-capture-strategy)
-         prompt args))
+  (apply 'completing-read prompt (occ-get-categories org-project-capture-strategy)
+         args))
 
 ;;;###autoload
 (defun org-project-capture-goto-location-for-project (project)

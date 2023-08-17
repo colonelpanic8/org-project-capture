@@ -179,9 +179,8 @@ compute this path."
   (--filter (file-readable-p it) (occ-get-todo-files org-projectile-strategy)))
 
 (defun org-projectile-completing-read (prompt &rest args)
-  (apply 'org-project-capture--completing-read
-         (org-project-capture-strategy-get-backend org-projectile-strategy)
-         prompt args))
+  (apply 'completing-read prompt (occ-get-categories org-projectile-strategy)
+         args))
 
 ;;;###autoload
 (defun org-projectile-goto-location-for-project (project)
