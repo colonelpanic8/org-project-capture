@@ -341,7 +341,9 @@ compute this path."
              :category (org-project-capture-category-from-file
                         (org-project-capture-strategy-get-backend
                          org-project-capture-strategy)
-                        (org-capture-get :original-file))
+                        (or (org-capture-get :original-file)
+                            (with-current-buffer (org-capture-get :original-buffer)
+                              default-directory)))
              :template capture-template
              :strategy org-project-capture-strategy
              :options additional-options)))))
