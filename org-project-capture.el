@@ -88,6 +88,11 @@ compute this path."
   :type '(boolean)
   :group 'org-project-capture)
 
+(defcustom org-project-capture-add-category-to-new-files t
+  "Whether or not to automatically add a category property to newly created files."
+  :type '(boolean)
+  :group 'org-project-capture)
+
 (defvar org-project-capture-strategy nil)
 
 (defvar org-project-capture-default-backend
@@ -193,8 +198,11 @@ compute this path."
 (cl-defmethod occ-get-capture-marker
     ((strategy org-project-capture-per-project-strategy) context)
   (with-slots (category) context
-    (let ((filepath (occ-get-capture-file strategy category)))
+    (let* ((filepath (occ-get-capture-file strategy category))
+           (file-existed (file-exists-p filepath)))
       (with-current-buffer (find-file-noselect filepath)
+        (when (and org-project-capture-add-category-to-new-files (not file-existed))
+          (org-set-property "CATEGORY" category))
         (point-max-marker)))))
 
 (cl-defmethod occ-target-entry-p
