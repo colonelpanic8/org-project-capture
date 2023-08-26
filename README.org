@@ -83,12 +83,13 @@ For those utilizing `use-package`, here's a streamlined setup:
   #+BEGIN_SRC emacs-lisp
   (use-package org-project-capture
     :bind (("C-c n p" . org-project-capture-project-todo-completing-read))
+    :ensure t
     :config
-    (defvar org-project-capture-backend
-      (make-instance 'YOUR-CHOSEN-BACKEND))  ; Replace with your backend of choice
-    (setq org-project-capture-projects-file "~/org/projects.org")
-    (org-project-capture-single-file)  ; Or (org-project-capture-per-project)
-    :ensure t)
+    (progn
+      (setq org-project-capture-backend
+            (make-instance 'YOUR-CHOSEN-BACKEND))  ; Replace with your backend of choice
+      (setq org-project-capture-projects-file "~/org/projects.org")
+      (org-project-capture-single-file))
   #+END_SRC
 
 ** Customization
