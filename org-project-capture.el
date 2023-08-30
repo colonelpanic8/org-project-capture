@@ -189,14 +189,14 @@ compute this path."
        (cl-mapcar 'org-project-capture-get-project-todo-file)))
 
 (cl-defmethod occ-get-capture-file
-    ((s org-project-capture-per-project-strategy) category)
+  ((s org-project-capture-per-project-strategy) category)
   (let ((project-root
          (cdr (assoc category
                      (org-project-capture-build-category-to-project-path s)))))
     (org-project-capture-get-project-todo-file project-root)))
 
 (cl-defmethod occ-get-capture-marker
-    ((strategy org-project-capture-per-project-strategy) context)
+  ((strategy org-project-capture-per-project-strategy) context)
   (with-slots (category) context
     (let* ((filepath (occ-get-capture-file strategy category))
            (file-existed (file-exists-p filepath)))
@@ -206,7 +206,7 @@ compute this path."
         (point-max-marker)))))
 
 (cl-defmethod occ-target-entry-p
-    ((_ org-project-capture-per-project-strategy) _context)
+  ((_ org-project-capture-per-project-strategy) _context)
   nil)
 
 
