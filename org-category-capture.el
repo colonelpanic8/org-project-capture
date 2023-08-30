@@ -35,6 +35,16 @@
 ;; XXX: dired-buffers is used below
 (require 'dired)
 
+(defgroup occ ()
+  "Customizations for org-category-capture."
+  :group 'org
+  :prefix "occ-")
+
+(defcustom occ-auto-insert-category-heading nil
+  "Whether to automatically insert the category property."
+  :group 'occ
+  :type 'bool)
+
 (defclass occ-strategy nil nil :abstract t)
 
 (cl-defmethod occ-get-categories ((_ occ-strategy)))
@@ -84,7 +94,10 @@
 
 (cl-defun occ-get-category-heading-location
     (category &rest args &key goto-subheading &allow-other-keys)
-  "Find a heading with text or category CATEGORY."
+  "Find a heading with text or category CATEGORY.
+
+ARGS are passed on to `occ-get-heading-category'. GOTO-SUBHEADING
+allows the selection of a subheading within the heading."
   (save-excursion
     (when goto-subheading (funcall goto-subheading))
     (if (equal major-mode 'org-mode)
@@ -117,7 +130,9 @@
 BUILD-HEADING will be applied to category to create the heading
 text. INSERT-HEADING-FN is the function that will be used to
 create the new bullet for the category heading. This function is
-tuned so that by default it looks and creates top level headings."
+tuned so that by default it looks and creates top level headings.
+Arbitrary additional ARGS are accepted and forwarded to
+`occ-get-category-heading-location'."
   (let ((category-location
          (apply 'occ-get-category-heading-location category args)))
     (if category-location
@@ -150,7 +165,11 @@ tuned so that by default it looks and creates top level headings."
     (if (save-excursion
           (re-search-forward (org-re-property "CATEGORY") element-end t))
         (org-get-category)
-      (funcall get-category-from-element))))
+      (progn
+        (let ((heading (funcall get-category-from-element)))
+          (when occ-auto-insert-category-heading
+            (org-set-property "CATEGORY" heading))
+          heading)))))
 
 (cl-defun occ-get-value-by-category
     (&rest args &key goto-subtree property-fn &allow-other-keys)
