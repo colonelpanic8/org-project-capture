@@ -209,6 +209,63 @@
                (org-project-capture-current-project-agenda-settings)
                '("proj1" "/tmp/proj1/TODO.org" nil))))))
 
+(ert-deftest test-org-project-capture-capture-for-current-project-uses-backend-name ()
+  "Test current-project capture passes the backend name through to `occ-capture'."
+  (let ((org-project-capture-strategy
+         (make-instance 'org-project-capture-per-project-strategy))
+        captured-context)
+    (cl-letf (((symbol-function 'org-project-capture-strategy-get-backend)
+               (lambda (_strategy) 'fake-backend))
+              ((symbol-function 'org-project-capture-current-project)
+               (lambda (_backend) "proj1"))
+              ((symbol-function 'occ-capture)
+               (lambda (context)
+                 (setq captured-context context))))
+      (org-project-capture-capture-for-current-project
+       :capture-template "* NEXT %?\n")
+      (should (string-equal (oref captured-context category) "proj1"))
+      (should (string-equal (oref captured-context template) "* NEXT %?\n"))
+      (should (eq (oref captured-context strategy)
+                  org-project-capture-strategy)))))
+
+(ert-deftest test-org-project-capture-agenda-for-current-project-dispatches-by-strategy ()
+  "Test agenda command dispatch for single-file and per-project strategies."
+  (let ((single-file-strategy
+         (make-instance 'org-project-capture-single-file-strategy))
+        (per-project-strategy
+         (make-instance 'org-project-capture-per-project-strategy))
+        single-file-call
+        per-project-call)
+    (cl-letf (((symbol-function 'org-project-capture-current-project-agenda-settings)
+               (lambda ()
+                 (if (object-of-class-p org-project-capture-strategy
+                                        'org-project-capture-single-file-strategy)
+                     '("proj1" "/tmp/projects.org" "CATEGORY=\"proj1\"")
+                   '("proj2" "/tmp/proj2/TODO.org" nil))))
+              ((symbol-function 'file-exists-p)
+               (lambda (_path) t))
+              ((symbol-function 'org-tags-view)
+               (lambda (todo-only matcher)
+                 (setq single-file-call
+                       (list todo-only matcher org-agenda-files
+                             org-agenda-overriding-header))))
+              ((symbol-function 'org-todo-list)
+               (lambda (arg)
+                 (setq per-project-call
+                       (list arg org-agenda-files
+                             org-agenda-overriding-header)))))
+      (let ((org-project-capture-strategy single-file-strategy))
+        (org-project-capture-agenda-for-current-project))
+      (should (equal single-file-call
+                     '(t "CATEGORY=\"proj1\""
+                       ("/tmp/projects.org")
+                       "Project TODOs: proj1")))
+      (let ((org-project-capture-strategy per-project-strategy))
+        (org-project-capture-agenda-for-current-project '(4)))
+      (should (equal per-project-call
+                     '((4) ("/tmp/proj2/TODO.org")
+                       "Project TODOs: proj2"))))))
+
 ;; Tests for heading text processing
 
 (ert-deftest test-org-project-capture-get-category-from-heading-strips-links ()
