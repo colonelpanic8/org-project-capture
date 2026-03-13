@@ -97,7 +97,11 @@
     (cl-letf (((symbol-function 'project-current)
                (lambda (_maybe-prompt dir)
                  (when (string-prefix-p "/home/user/myproj" dir)
-                   (cons 'vc "/home/user/myproj")))))
+                   'fake-project)))
+              ((symbol-function 'project-root)
+               (lambda (project)
+                 (should (eq project 'fake-project))
+                 "/home/user/myproj")))
       (should (string-equal
                (org-project-capture-category-from-file
                 backend "/home/user/myproj/src/file.el")
@@ -110,6 +114,26 @@
                (lambda (_maybe-prompt _dir) nil)))
       (should (null (org-project-capture-category-from-file
                      backend "/tmp/random-file.txt"))))))
+
+(ert-deftest test-current-project ()
+  "Test getting the current project name."
+  (let ((backend (make-instance 'org-project-capture-project-backend)))
+    (cl-letf (((symbol-function 'project-current)
+               (lambda (&optional _maybe-prompt _dir) 'fake-project))
+              ((symbol-function 'project-name)
+               (lambda (project)
+                 (should (eq project 'fake-project))
+                 "myproj")))
+      (should (string-equal
+               (org-project-capture-current-project backend)
+               "myproj")))))
+
+(ert-deftest test-current-project-not-in-project ()
+  "Test current-project when not in a project."
+  (let ((backend (make-instance 'org-project-capture-project-backend)))
+    (cl-letf (((symbol-function 'project-current)
+               (lambda (&optional _maybe-prompt _dir) nil)))
+      (should (null (org-project-capture-current-project backend))))))
 
 ;; Tests for get-all-categories
 
