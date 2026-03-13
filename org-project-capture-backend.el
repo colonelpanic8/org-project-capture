@@ -94,7 +94,7 @@
 (cl-defmethod org-project-capture-current-project
   ((_backend org-project-capture-project-backend))
   "Return the current project using `project-current'."
-  (project-current))
+  (project-name (project-current)))
 
 (provide 'org-project-capture-backend)
 ;;; org-project-capture-backend.el ends here
