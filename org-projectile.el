@@ -48,6 +48,14 @@
   "Return all known project paths from projectile."
   projectile-known-projects)
 
+(cl-defmethod org-project-capture-project-name-for-path
+  ((_ org-project-capture-projectile-backend) project-path)
+  "Return the projectile project name for PROJECT-PATH."
+  (let ((project-name (projectile-project-name project-path)))
+    (if (string-equal project-name "-")
+        (org-project-capture-category-from-project-root project-path)
+      project-name)))
+
 (cl-defmethod org-project-capture-project-root-of-filepath
   ((_ org-project-capture-projectile-backend) filepath)
   "Return the project root for FILEPATH using projectile."

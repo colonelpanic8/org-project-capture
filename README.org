@@ -35,12 +35,17 @@ You need to set the backend for `org-project-capture` using its class-based stru
     (make-instance 'org-project-capture-project-backend))
   #+END_SRC
 
-- If using `projectile` via `org-projectile`:
+- If using `projectile`:
 
   #+BEGIN_SRC emacs-lisp
+  (require 'org-projectile)
   (setq org-project-capture-default-backend
     (make-instance 'org-project-capture-projectile-backend))
   #+END_SRC
+
+`org-projectile` remains available as a compatibility layer, but the
+preferred setup is to configure `org-project-capture` directly and use the
+projectile backend.
 
 *** File Configuration
 
@@ -56,7 +61,13 @@ Establish a keybinding for easy capturing:
 
   #+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "C-c n p") 'org-project-capture-project-todo-completing-read)
+  (global-set-key (kbd "C-c n t") 'org-project-capture-capture-for-current-project)
+  (global-set-key (kbd "C-c n a") 'org-project-capture-agenda-for-current-project)
   #+END_SRC
+
+`org-project-capture-project-todo-completing-read` prompts for a project.
+`org-project-capture-capture-for-current-project` uses the current buffer's
+project automatically.
 
 *** Capture Strategy
 
@@ -92,6 +103,41 @@ For those utilizing `use-package`, here's a streamlined setup:
       (org-project-capture-single-file))
   #+END_SRC
 
+** `org-capture` Integration
+
+If you prefer to drive everything through `org-capture`, add a project-aware
+template entry:
+
+#+BEGIN_SRC emacs-lisp
+(setq org-capture-templates
+      (append org-capture-templates
+              (list
+               (org-project-capture-project-todo-entry
+                :capture-character "p"
+                :capture-heading "Project TODO"))))
+#+END_SRC
+
+That template uses the current buffer's project automatically.  If you want a
+custom template body, pass `:capture-template`:
+
+#+BEGIN_SRC emacs-lisp
+(org-project-capture-project-todo-entry
+ :capture-character "p"
+ :capture-heading "Project TODO"
+ :capture-template "* NEXT %?\n%U\n")
+#+END_SRC
+
+The command-style entry points also accept `:capture-template` directly:
+
+#+BEGIN_SRC emacs-lisp
+(global-set-key
+ (kbd "C-c n T")
+ (lambda ()
+   (interactive)
+   (org-project-capture-capture-for-current-project
+    :capture-template "* TODO %?\nDEADLINE: %^T\n")))
+#+END_SRC
+
 ** Customization
 
 There are numerous customization options for `org-project-capture`:
@@ -100,4 +146,9 @@ There are numerous customization options for `org-project-capture`:
   M-x customize-group RET org-project-capture RET
   #+END_SRC
 
+Project categories come from the active backend's project names.  For
+`projectile`, that means `projectile-project-name-function` and related
+projectile naming overrides are respected.  This is the recommended way to
+avoid collisions when two different projects would otherwise share the same
+basename.
 

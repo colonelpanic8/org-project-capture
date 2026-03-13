@@ -89,6 +89,22 @@
         (should (assoc "beta" result))
         (should (assoc "gamma" result))))))
 
+(ert-deftest test-build-category-to-project-path-prefers-project-name ()
+  "Test building category map uses `project-name' when available."
+  (let ((backend (make-instance 'org-project-capture-project-backend)))
+    (cl-letf (((symbol-function 'project-known-project-roots)
+               (lambda () '("/path/to/alpha")))
+              ((symbol-function 'project-current)
+               (lambda (_maybe-prompt dir)
+                 (when (string-prefix-p "/path/to/alpha" dir)
+                   'fake-project)))
+              ((symbol-function 'project-name)
+               (lambda (project)
+                 (should (eq project 'fake-project))
+                 "renamed-alpha")))
+      (let ((result (org-project-capture-build-category-to-project-path backend)))
+        (should (equal result '(("renamed-alpha" . "/path/to/alpha"))))))))
+
 ;; Tests for category-from-file
 
 (ert-deftest test-category-from-file ()

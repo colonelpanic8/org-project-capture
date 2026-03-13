@@ -159,6 +159,56 @@
       (should (eq (eieio-object-class selected)
                   'org-project-capture-per-project-strategy)))))
 
+(ert-deftest test-org-project-capture-projectile-backend-uses-custom-project-names ()
+  "Test that projectile category maps follow `projectile-project-name-function'."
+  (let* ((backend (make-instance 'org-project-capture-projectile-backend))
+         (a-project (org-project-capture-test-file "a"))
+         (b-project (org-project-capture-test-file "b"))
+         (projectile-known-projects (list a-project b-project))
+         (projectile-project-name-function
+          (lambda (project-root)
+            (format "named-%s"
+                    (file-name-nondirectory (directory-file-name project-root))))))
+    (should (equal
+             (org-project-capture-build-category-to-project-path backend)
+             `(("named-a" . ,a-project)
+               ("named-b" . ,b-project))))
+    (should (equal-as-sets
+             (org-project-capture-get-all-categories backend)
+             '("named-a" "named-b")))))
+
+(ert-deftest test-org-project-capture-current-project-agenda-settings-single-file ()
+  "Test agenda settings for single-file strategy."
+  (let ((org-project-capture-strategy
+         (make-instance 'org-project-capture-single-file-strategy)))
+    (cl-letf (((symbol-function 'org-project-capture-strategy-get-backend)
+               (lambda (_strategy) 'fake-backend))
+              ((symbol-function 'org-project-capture-current-project)
+               (lambda (_backend) "proj1"))
+              ((symbol-function 'occ-get-capture-file)
+               (lambda (_strategy category)
+                 (should (string-equal category "proj1"))
+                 "/tmp/projects.org")))
+      (should (equal
+               (org-project-capture-current-project-agenda-settings)
+               '("proj1" "/tmp/projects.org" "CATEGORY=\"proj1\""))))))
+
+(ert-deftest test-org-project-capture-current-project-agenda-settings-per-project ()
+  "Test agenda settings for per-project strategy."
+  (let ((org-project-capture-strategy
+         (make-instance 'org-project-capture-per-project-strategy)))
+    (cl-letf (((symbol-function 'org-project-capture-strategy-get-backend)
+               (lambda (_strategy) 'fake-backend))
+              ((symbol-function 'org-project-capture-current-project)
+               (lambda (_backend) "proj1"))
+              ((symbol-function 'occ-get-capture-file)
+               (lambda (_strategy category)
+                 (should (string-equal category "proj1"))
+                 "/tmp/proj1/TODO.org")))
+      (should (equal
+               (org-project-capture-current-project-agenda-settings)
+               '("proj1" "/tmp/proj1/TODO.org" nil))))))
+
 ;; Tests for heading text processing
 
 (ert-deftest test-org-project-capture-get-category-from-heading-strips-links ()

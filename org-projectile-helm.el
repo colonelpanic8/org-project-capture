@@ -6,7 +6,7 @@
 ;; Keywords: org projectile todo helm outlines
 ;; URL: https://github.com/IvanMalison/org-projectile
 ;; Version: 0.0.0
-;; Package-Requires: ((org-projectile "1.0.0") (helm "2.3.1") (emacs "25"))
+;; Package-Requires: ((org-projectile "1.0.0") (helm "2.3.1") (helm-org "1.0") (emacs "25"))
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

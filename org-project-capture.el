@@ -33,6 +33,7 @@
 (require 'dash)
 (require 'eieio)
 (require 'org)
+(require 'org-agenda)
 (require 'org-category-capture)
 (require 'org-project-capture-backend)
 (require 's)
@@ -425,6 +426,35 @@ ARGS are passed to `completing-read'."
   (apply 'completing-read prompt (occ-get-categories org-project-capture-strategy)
          args))
 
+(defun org-project-capture-current-project-context ()
+  "Build an `occ-context' for the current project."
+  (let* ((backend (org-project-capture-strategy-get-backend
+                   org-project-capture-strategy))
+         (project-name (org-project-capture-current-project backend)))
+    (unless project-name
+      (user-error "Current buffer is not in a recognized project"))
+    (make-instance 'occ-context
+                   :category project-name
+                   :template org-project-capture-capture-template
+                   :strategy org-project-capture-strategy
+                   :options nil)))
+
+(defun org-project-capture-current-project-agenda-settings ()
+  "Return agenda settings for the current project.
+The return value is a list of the form (PROJECT-NAME CAPTURE-FILE MATCHER)."
+  (let* ((context (org-project-capture-current-project-context))
+         (category (oref context category))
+         (strategy (if (object-of-class-p org-project-capture-strategy
+                                          'org-project-capture-combine-strategies)
+                       (org-project-capture-select-strategy-from-context
+                        org-project-capture-strategy context)
+                     org-project-capture-strategy))
+         (capture-file (occ-get-capture-file strategy category))
+         (matcher (when (object-of-class-p strategy
+                                           'org-project-capture-single-file-strategy)
+                    (format "CATEGORY=%S" category))))
+    (list category capture-file matcher)))
+
 ;;;###autoload
 (defun org-project-capture-goto-location-for-project (project)
   "Goto the location at which TODOs for PROJECT are stored."
@@ -493,6 +523,24 @@ were part of the capture template definition."
                         :strategy org-project-capture-strategy))
       (error (format "%s is not a recognized project."
                      project-name)))))
+
+;;;###autoload
+(defun org-project-capture-agenda-for-current-project (&optional arg)
+  "Show an agenda view restricted to the current project.
+
+With prefix ARG, pass it through to `org-todo-list' when the current
+project uses per-project storage."
+  (interactive "P")
+  (pcase-let ((`(,project-name ,capture-file ,matcher)
+               (org-project-capture-current-project-agenda-settings)))
+    (unless (file-exists-p capture-file)
+      (user-error "No TODO file exists for current project: %s" project-name))
+    (let ((org-agenda-files (list capture-file))
+          (org-agenda-overriding-header
+           (format "Project TODOs: %s" project-name)))
+      (if matcher
+          (org-tags-view t matcher)
+        (org-todo-list arg)))))
 
 (provide 'org-project-capture)
 ;;; org-project-capture.el ends here

@@ -46,6 +46,11 @@
   ((_backend org-project-capture-backend) _filepath)
   "Return the project root containing FILEPATH.")
 
+(cl-defmethod org-project-capture-project-name-for-path
+  ((_backend org-project-capture-backend) project-path)
+  "Return the backend-specific project name for PROJECT-PATH."
+  (org-project-capture-category-from-project-root project-path))
+
 (cl-defmethod org-project-capture-current-project
   ((_backend org-project-capture-backend))
   "Return the current project name.")
@@ -55,19 +60,21 @@
   "Build an alist mapping category names to project paths for BACKEND."
   (mapcar
    (lambda (path)
-     (cons (org-project-capture-category-from-project-root path) path))
+     (cons (org-project-capture-project-name-for-path backend path) path))
    (org-project-capture-get-all-project-paths backend)))
 
 (cl-defmethod org-project-capture-category-from-file
   ((backend org-project-capture-backend) filepath)
   "Get the category for the project containing FILEPATH using BACKEND."
-  (org-project-capture-category-from-project-root
-   (org-project-capture-project-root-of-filepath backend filepath)))
+  (when-let ((project-root
+              (org-project-capture-project-root-of-filepath backend filepath)))
+    (org-project-capture-project-name-for-path backend project-root)))
 
 (cl-defmethod org-project-capture-get-all-categories
   ((backend org-project-capture-backend))
   "Return a list of all category names for BACKEND."
-  (mapcar 'org-project-capture-category-from-project-root
+  (mapcar (lambda (path)
+            (org-project-capture-project-name-for-path backend path))
           (org-project-capture-get-all-project-paths backend)))
 
 
@@ -79,6 +86,13 @@
   ((_ org-project-capture-project-backend))
   "Return all known project paths using `project-known-project-roots'."
   (project-known-project-roots))
+
+(cl-defmethod org-project-capture-project-name-for-path
+  ((_ org-project-capture-project-backend) project-path)
+  "Return the `project.el' name for PROJECT-PATH."
+  (or (when-let ((project (project-current nil project-path)))
+        (project-name project))
+      (org-project-capture-category-from-project-root project-path)))
 
 (cl-defmethod org-project-capture-project-root-of-filepath
   ((_ org-project-capture-project-backend) filepath)
