@@ -83,7 +83,7 @@
 (cl-defmethod org-project-capture-project-root-of-filepath
   ((_ org-project-capture-project-backend) filepath)
   "Return the project root for FILEPATH using `project-current'."
-  (cdr (project-current nil filepath)))
+  (project-root (project-current nil filepath)))
 
 (cl-defmethod org-project-capture-switch-to-project
   ((_ org-project-capture-project-backend) directory)
